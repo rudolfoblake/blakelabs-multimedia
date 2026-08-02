@@ -256,9 +256,7 @@ class MediaQueueModel(QAbstractListModel):
         self.beginResetModel()
         self._items = retained
         self._assets = {
-            job_id: asset
-            for job_id, asset in self._assets.items()
-            if job_id in retained_ids
+            job_id: asset for job_id, asset in self._assets.items() if job_id in retained_ids
         }
         self.endResetModel()
         self.countChanged.emit()
