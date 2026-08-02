@@ -6,6 +6,22 @@ from uuid import UUID
 from blakelabs_multimedia.domain.conversion import ProcessingRequest
 
 
+def build_ffprobe_arguments(source: Path) -> list[str]:
+    return [
+        "-v",
+        "error",
+        "-show_entries",
+        (
+            "format=format_name,duration,size:"
+            "stream=codec_type,codec_name,width,height,duration,"
+            "nb_frames,channels,sample_rate"
+        ),
+        "-of",
+        "json",
+        str(source),
+    ]
+
+
 def build_ffmpeg_arguments(request: ProcessingRequest, temporary_output: Path) -> list[str]:
     return [
         "-hide_banner",

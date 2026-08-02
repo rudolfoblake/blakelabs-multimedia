@@ -71,6 +71,104 @@ jobs:
         run: ./scripts/build_windows.ps1
       - shell: pwsh
         run: ./scripts/build_msix.ps1 -SkipStandalone
+      - name: Load real music with the packaged Windows executable
+        timeout-minutes: 2
+        shell: pwsh
+        run: |
+          $env:SMOKE_MEDIA = Join-Path $env:RUNNER_TEMP "blakelabs-smoke.wav"
+          $env:BLAKELABS_SMOKE_MEDIA = $env:SMOKE_MEDIA
+          $env:BLAKELABS_SCREENSHOT_PATH = Join-Path $env:RUNNER_TEMP "blakelabs-windows-ui.png"
+          $env:BLAKELABS_SCREENSHOT_DELAY_MS = "2200"
+          $env:BLAKELABS_SMOKE_EXIT_MS = "3800"
+          $env:QT_QPA_PLATFORM = "offscreen"
+          $env:QT_QUICK_BACKEND = "software"
+
+          Remove-Item -LiteralPath $env:BLAKELABS_SCREENSHOT_PATH -Force -ErrorAction SilentlyContinue
+
+          @'
+          import math
+          import os
+          import struct
+          import wave
+
+          sample_rate = 44_100
+          with wave.open(os.environ["SMOKE_MEDIA"], "wb") as audio:
+              audio.setnchannels(1)
+              audio.setsampwidth(2)
+              audio.setframerate(sample_rate)
+              frames = (
+                  struct.pack("<h", round(7_000 * math.sin(2 * math.pi * 440 * index / sample_rate)))
+                  for index in range(sample_rate)
+              )
+              audio.writeframes(b"".join(frames))
+          '@ | python -
+
+          $application = Start-Process `
+            -FilePath ".\build\windows\BlakeLabsMultimedia\BlakeLabsMultimedia.exe" `
+            -PassThru
+
+          $deadline = [DateTime]::UtcNow.AddSeconds(30)
+          $screenshotReady = $false
+
+          do {
+            if (Test-Path -LiteralPath $env:BLAKELABS_SCREENSHOT_PATH) {
+              $screenshot = Get-Item -LiteralPath $env:BLAKELABS_SCREENSHOT_PATH
+              if ($screenshot.Length -gt 1024) {
+                $header = [byte[]]::new(8)
+                $stream = [System.IO.File]::Open(
+                  $env:BLAKELABS_SCREENSHOT_PATH,
+                  [System.IO.FileMode]::Open,
+                  [System.IO.FileAccess]::Read,
+                  [System.IO.FileShare]::ReadWrite
+                )
+                try {
+                  $bytesRead = $stream.Read($header, 0, $header.Length)
+                }
+                finally {
+                  $stream.Dispose()
+                }
+
+                if (
+                  $bytesRead -eq 8 -and
+                  [Convert]::ToHexString($header) -eq "89504E470D0A1A0A"
+                ) {
+                  $screenshotReady = $true
+                  break
+                }
+              }
+            }
+
+            $application.Refresh()
+            if ($application.HasExited) {
+              break
+            }
+
+            Start-Sleep -Milliseconds 250
+          } while ([DateTime]::UtcNow -lt $deadline)
+
+          if (-not $screenshotReady) {
+            if (-not $application.HasExited) {
+              Stop-Process -Id $application.Id -Force
+              $application.WaitForExit()
+            }
+            throw "Packaged application did not produce a valid UI smoke screenshot within 30 seconds"
+          }
+
+          if (-not $application.WaitForExit(20000)) {
+            Stop-Process -Id $application.Id -Force
+            $application.WaitForExit()
+            throw "Packaged application produced the screenshot but did not exit cleanly"
+          }
+
+          if ($application.ExitCode -ne 0) {
+            throw "Packaged application exited with code $($application.ExitCode)"
+          }
+      - name: Upload packaged Windows UI screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: UI-smoke-Windows
+          path: ${{ runner.temp }}/blakelabs-windows-ui.png
+          if-no-files-found: error
       - shell: pwsh
         run: choco install innosetup --yes --no-progress
       - shell: pwsh

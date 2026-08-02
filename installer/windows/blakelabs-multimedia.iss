@@ -1,5 +1,5 @@
 #define AppName "BlakeLabs Multimedia"
-#define AppVersion "0.1.0"
+#define AppVersion "0.3.1"
 #define AppPublisher "Blake Labs"
 #define AppExeName "BlakeLabsMultimedia.exe"
 

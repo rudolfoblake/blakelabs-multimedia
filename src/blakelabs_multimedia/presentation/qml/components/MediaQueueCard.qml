@@ -23,11 +23,28 @@ Rectangle {
   signal cancelRequested(string jobId)
   signal openRequested(string jobId)
 
-  implicitHeight: 112
+  implicitHeight: 126
   radius: Theme.radiusMedium
-  color: mouseArea.containsMouse ? Theme.surfaceHover : Theme.surface
+  color: mouseArea.containsMouse ? Theme.surfaceHover : Theme.surfaceRaised
   border.width: 1
   border.color: root.status === "failed" ? Theme.danger : Theme.border
+
+  function statusColor() {
+    if (root.status === "failed" || root.status === "cancelled") return Theme.danger
+    if (root.status === "completed" || root.status === "ready") return Theme.success
+    if (root.status === "processing") return Theme.accent
+    return Theme.warning
+  }
+
+  function metadataText() {
+    const parts = []
+    if (root.presetTitle) parts.push(root.presetTitle)
+    if (root.duration && root.duration !== "—") parts.push(root.duration)
+    if (root.fileSize) parts.push(root.fileSize)
+    if (root.speed) parts.push(root.speed)
+    if (root.eta) parts.push(root.eta)
+    return parts.join(" · ")
+  }
 
   Behavior on color { ColorAnimation { duration: 120 } }
 
@@ -44,27 +61,28 @@ Rectangle {
     spacing: 14
 
     Rectangle {
-      Layout.preferredWidth: 58
-      Layout.preferredHeight: 58
-      radius: 18
-      color: root.status === "failed" ? "#2A1519" : Theme.surfaceRaised
+      Layout.preferredWidth: 48
+      Layout.preferredHeight: 48
+      Layout.alignment: Qt.AlignTop
+      radius: 14
+      color: root.status === "failed" ? "#2A1519" : "#14261B"
 
       Text {
         anchors.centerIn: parent
-        text: root.kind === "audio" ? "A" : (root.kind === "image" ? "I" : "V")
+        text: root.kind === "audio" ? "A" : (root.kind === "video" ? "V" : "…")
         color: root.status === "failed" ? Theme.danger : Theme.accent
-        font.pixelSize: 16
+        font.pixelSize: 14
         font.weight: Font.Bold
       }
     }
 
     ColumnLayout {
       Layout.fillWidth: true
-      spacing: 6
+      spacing: 7
 
       RowLayout {
         Layout.fillWidth: true
-        spacing: 8
+        spacing: 10
 
         Text {
           Layout.fillWidth: true
@@ -75,14 +93,22 @@ Rectangle {
           elide: Text.ElideMiddle
         }
 
-        Text {
-          text: root.statusLabel
-          color: root.status === "failed" ? Theme.danger
-                 : root.status === "completed" ? Theme.success
-                 : root.status === "processing" ? Theme.accent
-                 : Theme.warning
-          font.pixelSize: 10
-          font.weight: Font.Bold
+        Rectangle {
+          Layout.preferredWidth: statusText.implicitWidth + 18
+          Layout.preferredHeight: 24
+          radius: 12
+          color: "transparent"
+          border.width: 1
+          border.color: root.statusColor()
+
+          Text {
+            id: statusText
+            anchors.centerIn: parent
+            text: root.statusLabel
+            color: root.statusColor()
+            font.pixelSize: 9
+            font.weight: Font.Bold
+          }
         }
       }
 
@@ -108,29 +134,28 @@ Rectangle {
             width: parent.width * Math.max(0, Math.min(1, root.progress))
             height: parent.height
             radius: parent.radius
-            color: root.status === "failed" ? Theme.danger : Theme.accent
+            color: root.statusColor()
             Behavior on width { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
           }
         }
 
         Text {
+          Layout.preferredWidth: 62
           text: root.progressLabel
           color: Theme.text
-          font.pixelSize: 10
+          font.pixelSize: 9
           font.weight: Font.Bold
+          horizontalAlignment: Text.AlignRight
         }
       }
 
       RowLayout {
         Layout.fillWidth: true
-        spacing: 10
+        spacing: 8
 
         Text {
           Layout.fillWidth: true
-          text: root.presetTitle
-                + (root.speed ? "  -  " + root.speed : "")
-                + (root.eta ? "  -  " + root.eta : "")
-                + "  -  " + root.duration + "  -  " + root.fileSize
+          text: root.metadataText()
           color: Theme.textMuted
           font.pixelSize: 9
           elide: Text.ElideRight
@@ -141,6 +166,7 @@ Rectangle {
           text: "Cancel"
           flat: true
           onClicked: root.cancelRequested(root.jobId)
+
           contentItem: Text {
             text: parent.text
             color: Theme.danger
@@ -156,6 +182,7 @@ Rectangle {
           text: "Open folder"
           flat: true
           onClicked: root.openRequested(root.jobId)
+
           contentItem: Text {
             text: parent.text
             color: Theme.accent

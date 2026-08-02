@@ -8,15 +8,24 @@ import "components"
 ApplicationWindow {
   id: window
   visible: true
-  width: 1440
-  height: 900
-  minimumWidth: 780
-  minimumHeight: 650
+  width: 1280
+  height: 820
+  minimumWidth: 760
+  minimumHeight: 620
   title: "BlakeLabs Multimedia"
   color: Theme.background
+  palette.window: Theme.background
+  palette.windowText: Theme.text
+  palette.base: Theme.surfaceRaised
+  palette.alternateBase: Theme.surface
+  palette.text: Theme.text
+  palette.button: Theme.surfaceRaised
+  palette.buttonText: Theme.text
+  palette.highlight: Theme.accent
+  palette.highlightedText: Theme.background
+  palette.placeholderText: Theme.textMuted
 
-  readonly property bool compactNavigation: width < 960
-  readonly property bool singleColumn: width < 1120
+  readonly property bool compact: width < 980
 
   FolderDialog {
     id: outputFolderDialog
@@ -24,165 +33,129 @@ ApplicationWindow {
     onAccepted: mediaController.setOutputDirectory(selectedFolder)
   }
 
-  RowLayout {
-    anchors.fill: parent
-    spacing: 0
+  header: Rectangle {
+    implicitHeight: 72
+    color: "#0B0F0D"
+    border.width: 1
+    border.color: Theme.border
 
-    Rectangle {
-      Layout.fillHeight: true
-      Layout.preferredWidth: window.compactNavigation ? 82 : 232
-      color: "#0B0F0D"
-      border.width: 1
-      border.color: Theme.border
+    RowLayout {
+      anchors.fill: parent
+      anchors.leftMargin: 24
+      anchors.rightMargin: 24
+      spacing: 16
 
-      ColumnLayout {
-        anchors.fill: parent
-        anchors.margins: 16
-        spacing: 8
+      BrandMark {
+        Layout.alignment: Qt.AlignVCenter
+      }
 
-        BrandMark {
-          Layout.fillWidth: true
-          Layout.bottomMargin: 24
-          compact: window.compactNavigation
-        }
+      Item { Layout.fillWidth: true }
 
-        SidebarItem {
-          Layout.fillWidth: true
-          symbol: "W"
-          text: "Workspace"
-          compact: window.compactNavigation
-          selected: true
-        }
-        SidebarItem {
-          Layout.fillWidth: true
-          symbol: "C"
-          text: "Convert"
-          compact: window.compactNavigation
-        }
-        SidebarItem {
-          Layout.fillWidth: true
-          symbol: "T"
-          text: "Quick tools"
-          compact: window.compactNavigation
-        }
-        SidebarItem {
-          Layout.fillWidth: true
-          symbol: "Q"
-          text: "Queue"
-          compact: window.compactNavigation
-        }
+      Rectangle {
+        Layout.preferredWidth: statusRow.implicitWidth + 24
+        Layout.preferredHeight: 34
+        radius: 17
+        color: Theme.surface
+        border.width: 1
+        border.color: Theme.border
 
-        Item { Layout.fillHeight: true }
+        Row {
+          id: statusRow
+          anchors.centerIn: parent
+          spacing: 8
 
-        Rectangle {
-          Layout.fillWidth: true
-          Layout.preferredHeight: window.compactNavigation ? 58 : 76
-          radius: 16
-          color: Theme.surface
-          border.width: 1
-          border.color: Theme.border
+          Rectangle {
+            anchors.verticalCenter: parent.verticalCenter
+            width: 7
+            height: 7
+            radius: 4
+            color: mediaQueueModel.activeCount > 0 ? Theme.warning : Theme.accent
+          }
 
-          Column {
-            anchors.centerIn: parent
-            spacing: 4
-            Rectangle {
-              anchors.horizontalCenter: parent.horizontalCenter
-              width: 8
-              height: 8
-              radius: 4
-              color: Theme.accent
-            }
-            Text {
-              visible: !window.compactNavigation
-              anchors.horizontalCenter: parent.horizontalCenter
-              text: "LOCAL PROCESSING"
-              color: Theme.textMuted
-              font.pixelSize: 8
-              font.weight: Font.Bold
-              font.letterSpacing: 0.8
-            }
+          Text {
+            text: mediaQueueModel.activeCount > 0
+                  ? mediaQueueModel.activeCount + " active"
+                  : "Ready"
+            color: Theme.textMuted
+            font.pixelSize: 10
+            font.weight: Font.DemiBold
           }
         }
       }
-    }
 
-    ScrollView {
-      Layout.fillWidth: true
-      Layout.fillHeight: true
-      clip: true
-      ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-      contentWidth: availableWidth
+      Button {
+        text: "Diagnostics"
+        flat: true
+        onClicked: mediaController.openDiagnosticsFolder()
+
+        contentItem: Text {
+          text: parent.text
+          color: Theme.textMuted
+          font.pixelSize: 10
+          font.weight: Font.DemiBold
+          horizontalAlignment: Text.AlignHCenter
+          verticalAlignment: Text.AlignVCenter
+        }
+      }
+    }
+  }
+
+  ScrollView {
+    id: page
+    anchors.fill: parent
+    clip: true
+    contentWidth: availableWidth
+    ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+
+    Item {
+      width: page.availableWidth
+      implicitHeight: content.implicitHeight + 48
 
       ColumnLayout {
-        width: parent.width
-        spacing: 22
+        id: content
+        anchors.top: parent.top
+        anchors.topMargin: 24
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: Math.min(Math.max(0, parent.width - 48), 1240)
+        spacing: 20
 
-        Item { Layout.preferredHeight: 8 }
-
-        RowLayout {
+        ColumnLayout {
           Layout.fillWidth: true
-          Layout.leftMargin: 28
-          Layout.rightMargin: 28
-          spacing: 16
+          spacing: 5
 
-          ColumnLayout {
+          Text {
             Layout.fillWidth: true
-            spacing: 4
-            Text {
-              text: "Multimedia, without the ritual sacrifice"
-              color: Theme.text
-              font.pixelSize: window.width < 900 ? 23 : 30
-              font.weight: Font.Bold
-            }
-            Text {
-              Layout.fillWidth: true
-              text: "Convert audio and video locally with FFmpeg. Responsive UI, real progress, clean outputs."
-              color: Theme.textMuted
-              font.pixelSize: 12
-              wrapMode: Text.WordWrap
-            }
+            text: "Convert audio and video"
+            color: Theme.text
+            font.pixelSize: window.compact ? 24 : 30
+            font.weight: Font.Bold
+            wrapMode: Text.WordWrap
           }
 
-          Rectangle {
-            Layout.preferredWidth: 124
-            Layout.preferredHeight: 38
-            radius: 19
-            color: Theme.surface
-            border.width: 1
-            border.color: Theme.border
-
-            Row {
-              anchors.centerIn: parent
-              spacing: 8
-              Rectangle { width: 7; height: 7; radius: 4; color: Theme.accent }
-              Text {
-                text: mediaQueueModel.activeCount > 0 ? "WORKING" : "READY"
-                color: Theme.textMuted
-                font.pixelSize: 9
-                font.weight: Font.Bold
-                font.letterSpacing: 0.8
-              }
-            }
+          Text {
+            Layout.fillWidth: true
+            text: "Choose files, select an output format and start the queue. Processing stays on this computer."
+            color: Theme.textMuted
+            font.pixelSize: 12
+            wrapMode: Text.WordWrap
           }
         }
 
         GridLayout {
           Layout.fillWidth: true
-          Layout.leftMargin: 28
-          Layout.rightMargin: 28
-          columns: window.singleColumn ? 1 : 2
-          columnSpacing: 20
-          rowSpacing: 20
+          columns: window.compact ? 1 : 2
+          columnSpacing: 18
+          rowSpacing: 18
 
           DropZone {
             Layout.fillWidth: true
-            Layout.preferredHeight: window.singleColumn ? 255 : 390
+            Layout.preferredHeight: 310
             onFilesSelected: function(urls) { mediaController.addFiles(urls) }
           }
 
           Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: window.singleColumn ? 420 : 390
+            Layout.preferredHeight: 310
             radius: Theme.radiusLarge
             color: Theme.surface
             border.width: 1
@@ -190,57 +163,103 @@ ApplicationWindow {
 
             ColumnLayout {
               anchors.fill: parent
-              anchors.margins: 18
+              anchors.margins: 20
               spacing: 12
 
-              RowLayout {
+              ColumnLayout {
                 Layout.fillWidth: true
+                spacing: 4
+
                 Text {
-                  Layout.fillWidth: true
-                  text: "Output recipe"
+                  text: "Output format"
                   color: Theme.text
                   font.pixelSize: 18
                   font.weight: Font.Bold
                 }
+
                 Text {
-                  text: "7 PRESETS"
-                  color: Theme.accent
-                  font.pixelSize: 9
-                  font.weight: Font.Bold
-                  font.letterSpacing: 1
+                  Layout.fillWidth: true
+                  text: "The selected preset is applied to every compatible ready file."
+                  color: Theme.textMuted
+                  font.pixelSize: 11
+                  wrapMode: Text.WordWrap
                 }
               }
 
-              Text {
+              ComboBox {
+                id: presetBox
                 Layout.fillWidth: true
-                text: "Choose once, process every ready item. Incompatible files fail clearly instead of guessing."
-                color: Theme.textMuted
-                font.pixelSize: 11
-                lineHeight: 1.3
-                wrapMode: Text.WordWrap
+                Layout.preferredHeight: 46
+                model: mediaController.presets
+                textRole: "title"
+                valueRole: "id"
+                onActivated: mediaController.selectPreset(currentValue)
+
+                function synchronizeSelection() {
+                  for (let index = 0; index < count; index++) {
+                    if (valueAt(index) === mediaController.selectedPresetId) {
+                      currentIndex = index
+                      return
+                    }
+                  }
+                }
+
+                Component.onCompleted: synchronizeSelection()
+
+                Connections {
+                  target: mediaController
+                  function onSelectedPresetChanged() { presetBox.synchronizeSelection() }
+                }
               }
 
-              ScrollView {
+              Rectangle {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                clip: true
-                ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+                radius: Theme.radiusMedium
+                color: Theme.surfaceRaised
+                border.width: 1
+                border.color: Theme.border
 
-                ColumnLayout {
-                  width: parent.width
-                  spacing: 8
+                RowLayout {
+                  anchors.fill: parent
+                  anchors.margins: 16
+                  spacing: 14
 
-                  Repeater {
-                    model: mediaController.presets
-                    delegate: PresetCard {
+                  Rectangle {
+                    Layout.preferredWidth: 52
+                    Layout.preferredHeight: 52
+                    radius: 16
+                    color: "#14261B"
+
+                    Text {
+                      anchors.centerIn: parent
+                      text: mediaController.selectedPresetExtension
+                      color: Theme.accent
+                      font.pixelSize: 11
+                      font.weight: Font.Bold
+                    }
+                  }
+
+                  ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 4
+
+                    Text {
                       Layout.fillWidth: true
-                      presetId: modelData.id
-                      title: modelData.title
-                      description: modelData.description
-                      extension: modelData.extension
-                      group: modelData.group
-                      selected: mediaController.selectedPresetId === modelData.id
-                      onChosen: mediaController.selectPreset(modelData.id)
+                      text: mediaController.selectedPresetTitle
+                      color: Theme.text
+                      font.pixelSize: 14
+                      font.weight: Font.Bold
+                      elide: Text.ElideRight
+                    }
+
+                    Text {
+                      Layout.fillWidth: true
+                      text: mediaController.selectedPresetDescription
+                      color: Theme.textMuted
+                      font.pixelSize: 11
+                      lineHeight: 1.25
+                      wrapMode: Text.WordWrap
                     }
                   }
                 }
@@ -251,31 +270,30 @@ ApplicationWindow {
 
         Rectangle {
           Layout.fillWidth: true
-          Layout.leftMargin: 28
-          Layout.rightMargin: 28
-          Layout.preferredHeight: 86
+          Layout.preferredHeight: window.compact ? 172 : 92
           radius: Theme.radiusMedium
           color: Theme.surface
           border.width: 1
           border.color: Theme.border
 
-          RowLayout {
+          GridLayout {
             anchors.fill: parent
             anchors.margins: 16
-            spacing: 12
-
-            Rectangle {
-              Layout.preferredWidth: 42
-              Layout.preferredHeight: 42
-              radius: 14
-              color: Theme.surfaceRaised
-              Text { anchors.centerIn: parent; text: "OUT"; color: Theme.accent; font.pixelSize: 10; font.weight: Font.Bold }
-            }
+            columns: window.compact ? 1 : 3
+            columnSpacing: 16
+            rowSpacing: 10
 
             ColumnLayout {
               Layout.fillWidth: true
               spacing: 3
-              Text { text: "Output destination"; color: Theme.text; font.pixelSize: 12; font.weight: Font.Bold }
+
+              Text {
+                text: "Save converted files to"
+                color: Theme.text
+                font.pixelSize: 12
+                font.weight: Font.Bold
+              }
+
               Text {
                 Layout.fillWidth: true
                 text: mediaController.outputDirectoryLabel
@@ -285,130 +303,156 @@ ApplicationWindow {
               }
             }
 
-            Button {
-              text: "Reset"
-              flat: true
-              visible: mediaController.outputDirectoryLabel !== "Same folder as source"
-              onClicked: mediaController.resetOutputDirectory()
-              contentItem: Text {
-                text: parent.text
-                color: Theme.textMuted
-                font.pixelSize: 10
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-              }
-            }
+            RowLayout {
+              Layout.alignment: window.compact ? Qt.AlignLeft : Qt.AlignHCenter
+              spacing: 4
 
-            Button {
-              text: "Choose folder"
-              flat: true
-              onClicked: outputFolderDialog.open()
-              contentItem: Text {
-                text: parent.text
-                color: Theme.accent
-                font.pixelSize: 10
-                font.weight: Font.Bold
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
+              Button {
+                visible: mediaController.outputDirectoryLabel !== "Same folder as source"
+                text: "Reset"
+                flat: true
+                onClicked: mediaController.resetOutputDirectory()
+
+                contentItem: Text {
+                  text: parent.text
+                  color: Theme.textMuted
+                  font.pixelSize: 10
+                  horizontalAlignment: Text.AlignHCenter
+                  verticalAlignment: Text.AlignVCenter
+                }
+              }
+
+              Button {
+                text: "Choose folder"
+                flat: true
+                onClicked: outputFolderDialog.open()
+
+                contentItem: Text {
+                  text: parent.text
+                  color: Theme.accent
+                  font.pixelSize: 10
+                  font.weight: Font.Bold
+                  horizontalAlignment: Text.AlignHCenter
+                  verticalAlignment: Text.AlignVCenter
+                }
               }
             }
 
             PrimaryButton {
-              text: mediaQueueModel.readyCount > 0 ? "Process " + mediaQueueModel.readyCount + " ready" : "Add media first"
+              Layout.fillWidth: window.compact
+              Layout.preferredWidth: 188
+              text: mediaQueueModel.readyCount > 0
+                    ? "Convert " + mediaQueueModel.readyCount + " file(s)"
+                    : "Add files to continue"
               enabled: mediaQueueModel.readyCount > 0
               onClicked: mediaController.startReady()
             }
           }
         }
 
-        RowLayout {
+        Rectangle {
           Layout.fillWidth: true
-          Layout.leftMargin: 28
-          Layout.rightMargin: 28
+          implicitHeight: queueContent.implicitHeight + 32
+          radius: Theme.radiusLarge
+          color: Theme.surface
+          border.width: 1
+          border.color: Theme.border
 
           ColumnLayout {
-            Layout.fillWidth: true
-            spacing: 2
-            Text { text: "Session queue"; color: Theme.text; font.pixelSize: 19; font.weight: Font.Bold }
-            Text {
-              text: mediaQueueModel.activeCount > 0
-                    ? mediaQueueModel.activeCount + " background operation(s)"
-                    : "No blocking dialogs. Ever."
-              color: Theme.textMuted
-              font.pixelSize: 10
+            id: queueContent
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.margins: 16
+            spacing: 12
+
+            RowLayout {
+              Layout.fillWidth: true
+
+              ColumnLayout {
+                spacing: 2
+
+                Text {
+                  text: "Queue"
+                  color: Theme.text
+                  font.pixelSize: 18
+                  font.weight: Font.Bold
+                }
+
+                Text {
+                  text: mediaQueueModel.count === 0
+                        ? "No files added"
+                        : mediaQueueModel.count + " file(s) in this session"
+                  color: Theme.textMuted
+                  font.pixelSize: 10
+                }
+              }
+
+              Item { Layout.fillWidth: true }
+
+              Button {
+                text: "Clear finished"
+                flat: true
+                enabled: mediaQueueModel.count > 0
+                onClicked: mediaController.clearFinished()
+
+                contentItem: Text {
+                  text: parent.text
+                  color: parent.enabled ? Theme.textMuted : Theme.border
+                  font.pixelSize: 10
+                  horizontalAlignment: Text.AlignHCenter
+                  verticalAlignment: Text.AlignVCenter
+                }
+              }
             }
-          }
 
-          Button {
-            text: "Clear finished"
-            flat: true
-            onClicked: mediaController.clearFinished()
-            contentItem: Text {
-              text: parent.text
-              color: Theme.textMuted
-              font.pixelSize: 10
-              horizontalAlignment: Text.AlignHCenter
-              verticalAlignment: Text.AlignVCenter
-            }
-          }
-        }
-
-        ListView {
-          id: queueList
-          Layout.fillWidth: true
-          Layout.leftMargin: 28
-          Layout.rightMargin: 28
-          Layout.preferredHeight: Math.max(170, contentHeight)
-          interactive: false
-          spacing: 10
-          model: mediaQueueModel
-
-          delegate: MediaQueueCard {
-            width: queueList.width
-            jobId: model.jobId
-            name: model.name
-            status: model.status
-            statusLabel: model.statusLabel
-            detail: model.detail
-            kind: model.kind
-            duration: model.duration
-            fileSize: model.fileSize
-            progress: model.progress
-            progressLabel: model.progressLabel
-            presetTitle: model.presetTitle
-            speed: model.speed
-            eta: model.eta
-            canCancel: model.canCancel
-            canOpen: model.canOpen
-            onCancelRequested: function(id) { mediaController.cancelJob(id) }
-            onOpenRequested: function(id) { mediaController.openOutputFolder(id) }
-          }
-
-          footer: Item {
-            width: queueList.width
-            height: mediaQueueModel.count === 0 ? 150 : 8
-            Column {
+            Rectangle {
+              Layout.fillWidth: true
+              Layout.preferredHeight: 118
               visible: mediaQueueModel.count === 0
-              anchors.centerIn: parent
-              spacing: 7
-              Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: "The queue is suspiciously calm"
-                color: Theme.text
-                font.pixelSize: 14
-                font.weight: Font.DemiBold
+              radius: Theme.radiusMedium
+              color: Theme.surfaceRaised
+              border.width: 1
+              border.color: Theme.border
+
+              Column {
+                anchors.centerIn: parent
+                spacing: 6
+
+                Text {
+                  anchors.horizontalCenter: parent.horizontalCenter
+                  text: "Your files will appear here"
+                  color: Theme.text
+                  font.pixelSize: 13
+                  font.weight: Font.DemiBold
+                }
+
+                Text {
+                  anchors.horizontalCenter: parent.horizontalCenter
+                  text: "Add an audio or video file to begin."
+                  color: Theme.textMuted
+                  font.pixelSize: 10
+                }
               }
-              Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: "Drop media above. Analysis starts immediately."
-                color: Theme.textMuted
-                font.pixelSize: 10
+            }
+
+            ColumnLayout {
+              Layout.fillWidth: true
+              visible: mediaQueueModel.count > 0
+              spacing: 10
+
+              Repeater {
+                model: mediaQueueModel
+
+                delegate: MediaQueueCard {
+                  Layout.fillWidth: true
+                  onCancelRequested: function(id) { mediaController.cancelJob(id) }
+                  onOpenRequested: function(id) { mediaController.openOutputFolder(id) }
+                }
               }
             }
           }
         }
-
-        Item { Layout.preferredHeight: 28 }
       }
     }
   }
