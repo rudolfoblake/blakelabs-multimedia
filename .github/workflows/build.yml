@@ -109,48 +109,17 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           pattern: BlakeLabsMultimedia-*
           path: release-assets
           merge-multiple: true
       - name: Flatten and verify release assets
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p release-upload
-
-          while IFS= read -r -d '' asset; do
-            destination="release-upload/$(basename "$asset")"
-            if [[ -e "$destination" ]]; then
-              echo "Duplicate release asset name: $(basename "$asset")" >&2
-              exit 1
-            fi
-            cp "$asset" "$destination"
-          done < <(find release-assets -type f -print0)
-
-          expected=(
-            BlakeLabsMultimedia-Setup-x64.exe
-            BlakeLabsMultimedia-Store-x64.msix
-            BlakeLabsMultimedia-linux-x64.tar.gz
-          )
-
-          for asset in "${expected[@]}"; do
-            if [[ ! -f "release-upload/$asset" ]]; then
-              echo "Missing required release asset: $asset" >&2
-              find release-assets -type f -print >&2
-              exit 1
-            fi
-          done
-
-          asset_count="$(find release-upload -maxdepth 1 -type f | wc -l)"
-          if [[ "$asset_count" -ne "${#expected[@]}" ]]; then
-            echo "Expected ${#expected[@]} release assets, found $asset_count." >&2
-            find release-upload -maxdepth 1 -type f -print >&2
-            exit 1
-          fi
-
-          sha256sum release-upload/*
+        run: >-
+          python3 scripts/prepare_release_assets.py
+          --source release-assets
+          --destination release-upload
       - name: Create release and attach installers
         env:
           GH_TOKEN: ${{ github.token }}
