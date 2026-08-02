@@ -20,7 +20,10 @@ from blakelabs_multimedia.presentation.qt.media_queue_model import MediaQueueMod
 
 
 def run() -> int:
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    )
     QCoreApplication.setOrganizationName("Blake Labs")
     QCoreApplication.setOrganizationDomain("blakelabs.dev")
     QCoreApplication.setApplicationName("BlakeLabs Multimedia")
