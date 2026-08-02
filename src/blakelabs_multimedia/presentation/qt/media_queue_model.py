@@ -79,9 +79,19 @@ class MediaQueueModel(QAbstractListModel):
         return sum(item["status"] == JobStatus.READY.value for item in self._items)
 
     @Property(int, notify=summaryChanged)
+    def failedCount(self) -> int:
+        return sum(item["status"] == JobStatus.FAILED.value for item in self._items)
+
+    @Property(int, notify=summaryChanged)
     def activeCount(self) -> int:
         active = {JobStatus.QUEUED.value, JobStatus.PROCESSING.value, JobStatus.ANALYZING.value}
         return sum(item["status"] in active for item in self._items)
+
+    def first_failure_detail(self) -> str:
+        for item in self._items:
+            if item["status"] == JobStatus.FAILED.value:
+                return str(item.get("detail", "Media analysis failed."))
+        return ""
 
     def roleNames(self) -> dict[int, QByteArray]:
         return {role: QByteArray(key.encode()) for role, key in _ROLE_KEYS.items()}
