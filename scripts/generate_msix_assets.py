@@ -29,7 +29,13 @@ def render_logo(width: int, height: int) -> Image.Image:
     margin = round(side * 0.045)
     radius = round(side * 0.21)
     bounds = (left + margin, top + margin, left + side - margin, top + side - margin)
-    drawing.rounded_rectangle(bounds, radius=radius, fill=BACKGROUND, outline=BORDER, width=max(1, side // 180))
+    drawing.rounded_rectangle(
+        bounds,
+        radius=radius,
+        fill=BACKGROUND,
+        outline=BORDER,
+        width=max(1, side // 180),
+    )
 
     inset = round(side * 0.18)
     mark_left = left + inset
