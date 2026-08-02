@@ -10,7 +10,6 @@ def build_ffprobe_arguments(source: Path) -> list[str]:
     return [
         "-v",
         "error",
-        "-nostdin",
         "-show_entries",
         (
             "format=format_name,duration,size:"
