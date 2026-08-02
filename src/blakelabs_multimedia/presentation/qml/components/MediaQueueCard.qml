@@ -22,7 +22,6 @@ Rectangle {
   required property bool canOpen
   signal cancelRequested(string jobId)
   signal openRequested(string jobId)
-  signal diagnosticsRequested()
 
   implicitHeight: root.status === "failed" ? 148 : 126
   radius: Theme.radiusMedium
@@ -171,7 +170,7 @@ Rectangle {
           visible: root.status === "failed"
           text: "Diagnostics"
           flat: true
-          onClicked: root.diagnosticsRequested()
+          onClicked: mediaController.openDiagnosticsFolder()
 
           contentItem: Text {
             text: parent.text
