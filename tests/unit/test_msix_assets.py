@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from PIL import Image
-
 from scripts.generate_msix_assets import generate_assets
 
 
