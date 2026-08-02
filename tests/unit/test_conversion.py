@@ -18,11 +18,12 @@ def test_output_path_never_replaces_source(tmp_path: Path) -> None:
     assert output.name == "track-converted.mp3"
 
 
-def test_probe_command_is_bounded_and_non_interactive(tmp_path: Path) -> None:
+def test_probe_command_requests_only_bounded_metadata(tmp_path: Path) -> None:
     source = tmp_path / "track.wav"
     arguments = build_ffprobe_arguments(source)
     assert arguments[-1] == str(source)
-    assert "-nostdin" in arguments
+    assert "-nostdin" not in arguments
+    assert "-show_streams" not in arguments
     assert "-show_entries" in arguments
     entries = arguments[arguments.index("-show_entries") + 1]
     assert "format_name" in entries
