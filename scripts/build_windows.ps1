@@ -1,4 +1,5 @@
 $ErrorActionPreference = "Stop"
+$PSNativeCommandUseErrorActionPreference = $true
 $Root = Split-Path -Parent $PSScriptRoot
 Set-Location $Root
 
@@ -13,7 +14,7 @@ uv run python -m nuitka `
   --standalone `
   --assume-yes-for-downloads `
   --enable-plugin=pyside6 `
-  --include-package=blakelabs_multimedia `
+  --include-qt-plugins=qml `
   --include-data-dir=src/blakelabs_multimedia/presentation/qml=blakelabs_multimedia/presentation/qml `
   --include-data-dir=src/blakelabs_multimedia/resources=blakelabs_multimedia/resources `
   --windows-console-mode=disable `
@@ -23,6 +24,7 @@ uv run python -m nuitka `
 
 $Generated = Join-Path $BuildRoot "__main__.dist"
 $Product = Join-Path $BuildRoot "BlakeLabsMultimedia"
+if (-not (Test-Path $Generated)) { throw "Nuitka output directory was not created: $Generated" }
 if (Test-Path $Product) { Remove-Item $Product -Recurse -Force }
 Move-Item $Generated $Product
 Write-Host "Standalone application: $Product"
