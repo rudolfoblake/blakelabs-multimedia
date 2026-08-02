@@ -8,38 +8,37 @@ RowLayout {
   spacing: 12
 
   Rectangle {
-    Layout.preferredWidth: 38
-    Layout.preferredHeight: 38
-    radius: 12
-    color: Theme.accent
+    Layout.preferredWidth: 42
+    Layout.preferredHeight: 42
+    radius: 13
+    color: Theme.surfaceRaised
+    border.width: 1
+    border.color: Theme.borderStrong
 
-    Text {
-      anchors.centerIn: parent
-      text: "B"
-      color: Theme.background
-      font.pixelSize: 20
-      font.weight: Font.Black
+    AlienLogo {
+      anchors.fill: parent
+      anchors.margins: 6
     }
   }
 
   ColumnLayout {
     visible: !root.compact
-    spacing: -2
+    spacing: -1
 
     Text {
       text: "BLAKE LABS"
       color: Theme.text
-      font.pixelSize: 14
+      font.pixelSize: 13
       font.weight: Font.Bold
-      font.letterSpacing: 1.4
+      font.letterSpacing: 1.8
     }
 
     Text {
       text: "MULTIMEDIA"
       color: Theme.accent
-      font.pixelSize: 10
+      font.pixelSize: 9
       font.weight: Font.DemiBold
-      font.letterSpacing: 2.2
+      font.letterSpacing: 2.4
     }
   }
 }
