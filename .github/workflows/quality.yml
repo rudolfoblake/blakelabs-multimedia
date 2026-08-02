@@ -18,8 +18,13 @@ jobs:
         with:
           python-version: "3.12"
           enable-cache: true
-      - run: uv sync --all-groups
+      - run: uv sync --group dev
       - run: uv run ruff check .
       - run: uv run ruff format --check .
-      - run: uv run mypy src
+      - run: uv run mypy src scripts
       - run: uv run pytest --cov --cov-report=term-missing
+      - name: QML offscreen startup smoke test
+        env:
+          QT_QPA_PLATFORM: offscreen
+          BLAKELABS_SMOKE_EXIT_MS: "300"
+        run: uv run blakelabs-multimedia
