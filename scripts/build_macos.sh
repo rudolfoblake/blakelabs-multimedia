@@ -44,7 +44,7 @@ build_root="$ROOT/build/macos/$arch"
 icon="$build_root/BlakeLabsMultimedia.png"
 rm -rf "$build_root"
 mkdir -p "$build_root"
-uv run python scripts/generate_macos_icon.py --output "$icon"
+uv run python -m scripts.generate_macos_icon --output "$icon"
 
 uv run python -m nuitka \
   --mode=app \
