@@ -22,7 +22,7 @@ class MediaController(QObject):
         self._active: dict[UUID, CancelHandle] = {}
 
     @Slot("QVariantList")
-    def addFiles(self, urls: list[object]) -> None:  # noqa: N802 - exposed QML API
+    def addFiles(self, urls: list[object]) -> None:
         for raw_url in urls:
             path = self._to_local_path(raw_url)
             if path is not None:

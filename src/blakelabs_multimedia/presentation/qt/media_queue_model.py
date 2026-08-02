@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 from uuid import UUID
 
-from PySide6.QtCore import QAbstractListModel, QModelIndex, Property, Qt, Signal
+from PySide6.QtCore import Property, QAbstractListModel, QModelIndex, Qt, Signal
 
 from blakelabs_multimedia.domain.jobs import JobStatus, MediaJob
 from blakelabs_multimedia.domain.media import MediaAsset
@@ -37,7 +37,7 @@ class MediaQueueModel(QAbstractListModel):
     def count(self) -> int:
         return len(self._items)
 
-    def roleNames(self) -> dict[int, bytes]:  # noqa: N802 - Qt API
+    def roleNames(self) -> dict[int, bytes]:
         return {
             int(_Role.ID): b"jobId",
             int(_Role.NAME): b"name",
@@ -51,7 +51,7 @@ class MediaQueueModel(QAbstractListModel):
             int(_Role.PROGRESS): b"progress",
         }
 
-    def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:  # noqa: B008, N802
+    def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:  # noqa: B008
         return 0 if parent.isValid() else len(self._items)
 
     def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
@@ -85,7 +85,7 @@ class MediaQueueModel(QAbstractListModel):
     def mark_ready(self, job_id: UUID, asset: MediaAsset) -> None:
         detail_parts = [asset.container.upper() or "MEDIA"]
         if asset.width and asset.height:
-            detail_parts.append(f"{asset.width}×{asset.height}")
+            detail_parts.append(f"{asset.width}x{asset.height}")
         if asset.video_codec:
             detail_parts.append(asset.video_codec.upper())
         if asset.audio_codec:
@@ -120,9 +120,7 @@ class MediaQueueModel(QAbstractListModel):
         self._items[row].update(values)
         model_index = self.index(row, 0)
         changed_roles = [
-            role
-            for role, name in self.roleNames().items()
-            if name.decode() in values
+            role for role, name in self.roleNames().items() if name.decode() in values
         ]
         self.dataChanged.emit(model_index, model_index, changed_roles)
 
