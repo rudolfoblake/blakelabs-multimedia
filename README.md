@@ -2,19 +2,23 @@
 
 A premium native audio and video workspace by **Blake Labs**.
 
-BlakeLabs Multimedia turns FFmpeg into a clean Windows and Linux desktop application. Files stay local, the interface stays responsive, and the user does not need to understand codecs, filters or terminal syntax.
+BlakeLabs Multimedia turns FFmpeg into a clean Windows, macOS and Linux desktop application. Files stay local, the interface stays responsive, and the user does not need to understand codecs, filters or terminal syntax.
 
 ## Downloads
 
-Permanent Windows and Linux packages are published on the repository's **Releases** page.
+Permanent native packages are published on the repository's **Releases** page.
 
 Each project version creates:
 
 - `BlakeLabsMultimedia-Setup-x64.exe` — native Windows installer, currently unsigned
 - `BlakeLabsMultimedia-Store-x64.msix` — unsigned package for Microsoft Store submission
+- `BlakeLabsMultimedia-macos-arm64.dmg` — Apple Silicon disk image
+- `BlakeLabsMultimedia-macos-x64.dmg` — Intel Mac disk image
 - `BlakeLabsMultimedia-linux-x64.tar.gz` — standalone Linux bundle
 
 The Store MSIX is meant to be uploaded to Partner Center, where Microsoft signs it after certification. It is not intended for unsigned direct sideloading from GitHub.
+
+The macOS DMGs are ad-hoc signed for bundle-integrity validation. Public distribution without Gatekeeper warnings still requires a Developer ID certificate and Apple notarization. See [docs/macos.md](docs/macos.md).
 
 Microsoft Store product: `https://apps.microsoft.com/detail/9NS1J3D51RFX`
 
@@ -29,6 +33,7 @@ Microsoft Store product: `https://apps.microsoft.com/detail/9NS1J3D51RFX`
 - Configurable output directory remembered with native settings
 - Seven built-in recipes: MP4 Universal, MP4 Compact, WebM, MP3, FLAC, WAV and GIF
 - Windows standalone build, Inno Setup installer and Store MSIX
+- Native macOS `.app` and `.dmg` builds for Apple Silicon and Intel
 - Linux standalone compressed bundle
 - Bundled FFmpeg/FFprobe in release builds, with system and environment-variable fallback for development
 
@@ -94,10 +99,31 @@ Output: `build/msix/BlakeLabsMultimedia-Store-x64.msix`.
 
 The package uses the Store identity assigned to Blake Labs and is validated by `MakeAppx.exe`. See [docs/microsoft-store.md](docs/microsoft-store.md) for the Partner Center workflow and identity details.
 
+### macOS disk images
+
+On an Apple Silicon Mac:
+
+```bash
+bash scripts/build_macos.sh arm64
+```
+
+On an Intel Mac:
+
+```bash
+bash scripts/build_macos.sh x64
+```
+
+Outputs:
+
+- `build/macos/BlakeLabsMultimedia-macos-arm64.dmg`
+- `build/macos/BlakeLabsMultimedia-macos-x64.dmg`
+
+The script creates a native Nuitka `.app`, patches product metadata, performs an offscreen launch smoke test, validates the bundle with ad-hoc code signing and creates a drag-to-Applications DMG.
+
 ### Linux bundle
 
 ```bash
-./scripts/build_linux.sh
+bash scripts/build_linux.sh
 ```
 
 Output: `build/linux/BlakeLabsMultimedia-linux-x64.tar.gz`.
@@ -118,7 +144,7 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md). Development uses branches and pull requ
 
 ## Third-party software
 
-Read [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) before redistribution. Release builds currently bundle a GPL FFmpeg variant because the default MP4 presets use `libx264`.
+Read [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) before redistribution. Release builds currently bundle GPL FFmpeg variants because the default MP4 presets use `libx264`.
 
 ## License
 
