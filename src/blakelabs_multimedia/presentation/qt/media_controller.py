@@ -388,8 +388,8 @@ class MediaController(QObject):
 
     def _read_int(self, key: str, default: int) -> int:
         try:
-            return max(0, int(self._settings.value(key, default)))
-        except (TypeError, ValueError):
+            return max(0, int(str(self._settings.value(key, default))))
+        except ValueError:
             return default
 
     def _read_bool(self, key: str, default: bool) -> bool:
