@@ -15,6 +15,7 @@ from blakelabs_multimedia.application.use_cases.probe_media import ProbeMedia
 from blakelabs_multimedia.infrastructure.ffmpeg.binary_resolver import FfmpegBinaryResolver
 from blakelabs_multimedia.infrastructure.ffmpeg.qt_probe import QtFfprobeMediaProbe
 from blakelabs_multimedia.infrastructure.ffmpeg.qt_processor import QtFfmpegMediaProcessor
+from blakelabs_multimedia.presentation import qml as qml_resources
 from blakelabs_multimedia.presentation.qt.media_controller import MediaController
 from blakelabs_multimedia.presentation.qt.media_queue_model import MediaQueueModel
 
@@ -42,7 +43,7 @@ def run() -> int:
     engine.rootContext().setContextProperty("mediaController", controller)
     engine.rootContext().setContextProperty("mediaQueueModel", queue_model)
 
-    qml_package = files("blakelabs_multimedia.presentation.qml")
+    qml_package = files(qml_resources)
     with as_file(qml_package) as qml_root:
         engine.addImportPath(str(qml_root))
         engine.load(QUrl.fromLocalFile(str(qml_root / "Main.qml")))
