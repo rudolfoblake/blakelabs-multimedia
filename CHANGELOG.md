@@ -18,3 +18,6 @@ All notable changes to BlakeLabs Multimedia will be documented here.
 - Microsoft Store MSIX packaging with the assigned Blake Labs product identity
 - Deterministic Store manifest version rendering and generated logo assets
 - Partner Center submission and restricted-capability documentation
+- Native macOS `.app` and DMG packaging for Apple Silicon and Intel
+- Architecture-aware bundled FFmpeg resolution on macOS
+- macOS bundle signing verification and offscreen startup validation
