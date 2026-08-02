@@ -1,0 +1,43 @@
+name: Native builds
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  windows-installer:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - shell: pwsh
+        run: ./scripts/build_windows.ps1
+      - shell: pwsh
+        run: choco install innosetup --yes --no-progress
+      - shell: pwsh
+        run: iscc installer/windows/blakelabs-multimedia.iss
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BlakeLabsMultimedia-Windows-x64
+          path: build/installer/BlakeLabsMultimedia-Setup-x64.exe
+
+  linux-bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - run: ./scripts/build_linux.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BlakeLabsMultimedia-Linux-x64
+          path: build/linux/BlakeLabsMultimedia-linux-x64.tar.gz
