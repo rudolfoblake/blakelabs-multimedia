@@ -83,6 +83,8 @@ jobs:
           $env:QT_QPA_PLATFORM = "offscreen"
           $env:QT_QUICK_BACKEND = "software"
 
+          Remove-Item -LiteralPath $env:BLAKELABS_SCREENSHOT_PATH -Force -ErrorAction SilentlyContinue
+
           @'
           import math
           import os
@@ -101,12 +103,52 @@ jobs:
               audio.writeframes(b"".join(frames))
           '@ | python -
 
-          & ".\build\windows\BlakeLabsMultimedia\BlakeLabsMultimedia.exe"
-          if ($LASTEXITCODE -ne 0) {
-            throw "Packaged application exited with code $LASTEXITCODE"
+          $application = Start-Process `
+            -FilePath ".\build\windows\BlakeLabsMultimedia\BlakeLabsMultimedia.exe" `
+            -PassThru
+
+          $deadline = [DateTime]::UtcNow.AddSeconds(30)
+          $screenshotReady = $false
+
+          do {
+            if (Test-Path -LiteralPath $env:BLAKELABS_SCREENSHOT_PATH) {
+              $screenshot = Get-Item -LiteralPath $env:BLAKELABS_SCREENSHOT_PATH
+              if ($screenshot.Length -gt 1024) {
+                $header = Get-Content `
+                  -LiteralPath $env:BLAKELABS_SCREENSHOT_PATH `
+                  -Encoding Byte `
+                  -TotalCount 8
+                if ([Convert]::ToHexString($header) -eq "89504E470D0A1A0A") {
+                  $screenshotReady = $true
+                  break
+                }
+              }
+            }
+
+            $application.Refresh()
+            if ($application.HasExited) {
+              break
+            }
+
+            Start-Sleep -Milliseconds 250
+          } while ([DateTime]::UtcNow -lt $deadline)
+
+          if (-not $screenshotReady) {
+            if (-not $application.HasExited) {
+              Stop-Process -Id $application.Id -Force
+              $application.WaitForExit()
+            }
+            throw "Packaged application did not produce a valid UI smoke screenshot within 30 seconds"
           }
-          if (-not (Test-Path $env:BLAKELABS_SCREENSHOT_PATH)) {
-            throw "Packaged application did not produce the UI smoke screenshot"
+
+          if (-not $application.WaitForExit(20_000)) {
+            Stop-Process -Id $application.Id -Force
+            $application.WaitForExit()
+            throw "Packaged application produced the screenshot but did not exit cleanly"
+          }
+
+          if ($application.ExitCode -ne 0) {
+            throw "Packaged application exited with code $($application.ExitCode)"
           }
       - name: Upload packaged Windows UI screenshot
         uses: actions/upload-artifact@v4
