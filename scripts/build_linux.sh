@@ -14,13 +14,16 @@ uv run python -m nuitka \
   --standalone \
   --assume-yes-for-downloads \
   --enable-plugin=pyside6 \
-  --include-package=blakelabs_multimedia \
+  --include-qt-plugins=qml \
   --include-data-dir=src/blakelabs_multimedia/presentation/qml=blakelabs_multimedia/presentation/qml \
   --include-data-dir=src/blakelabs_multimedia/resources=blakelabs_multimedia/resources \
   --output-filename=blakelabs-multimedia \
   --output-dir="$BUILD_ROOT" \
   src/blakelabs_multimedia/__main__.py
 
-mv "$BUILD_ROOT/__main__.dist" "$BUILD_ROOT/BlakeLabsMultimedia"
+GENERATED="$BUILD_ROOT/__main__.dist"
+PRODUCT="$BUILD_ROOT/BlakeLabsMultimedia"
+test -d "$GENERATED"
+mv "$GENERATED" "$PRODUCT"
 tar -C "$BUILD_ROOT" -czf "$BUILD_ROOT/BlakeLabsMultimedia-linux-x64.tar.gz" BlakeLabsMultimedia
 printf 'Linux bundle: %s\n' "$BUILD_ROOT/BlakeLabsMultimedia-linux-x64.tar.gz"
