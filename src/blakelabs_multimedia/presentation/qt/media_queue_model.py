@@ -62,9 +62,9 @@ class MediaQueueModel(QAbstractListModel):
     def roleNames(self) -> dict[int, QByteArray]:
         return {role: QByteArray(key.encode()) for role, key in _ROLE_KEYS.items()}
 
-    def rowCount(  # noqa: B008
+    def rowCount(
         self,
-        parent: QModelIndex | QPersistentModelIndex = QModelIndex(),
+        parent: QModelIndex | QPersistentModelIndex = QModelIndex(),  # noqa: B008
     ) -> int:
         return 0 if parent.isValid() else len(self._items)
 
