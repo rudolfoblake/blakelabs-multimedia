@@ -129,7 +129,9 @@ def _copy_executables(
     for executable_name in executable_names:
         matches = list(extraction.rglob(executable_name))
         if not matches:
-            raise FileNotFoundError(f"{executable_name} was not present in downloaded FFmpeg archive")
+            raise FileNotFoundError(
+                f"{executable_name} was not present in downloaded FFmpeg archive"
+            )
         target = destination / executable_name
         shutil.copy2(matches[0], target)
         _make_executable(target)
