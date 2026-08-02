@@ -119,10 +119,10 @@ def run() -> int:
             def inspect_smoke_state() -> None:
                 nonlocal attempts
                 attempts += 1
-                if queue_model.readyCount > 0:
+                if queue_model.ready_count() > 0:
                     settle_smoke("ready", 0)
                     return
-                if queue_model.failedCount > 0:
+                if queue_model.failed_count() > 0:
                     detail = queue_model.first_failure_detail().replace("\n", " ").strip()
                     settle_smoke(f"failed:{detail}", 2)
                     return
