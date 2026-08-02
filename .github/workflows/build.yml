@@ -57,7 +57,7 @@ jobs:
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
   windows-installer:
-    name: Windows x64 installer
+    name: Windows x64 packages
     needs: plan
     if: needs.plan.outputs.build == 'true'
     runs-on: windows-latest
@@ -70,13 +70,17 @@ jobs:
       - shell: pwsh
         run: ./scripts/build_windows.ps1
       - shell: pwsh
+        run: ./scripts/build_msix.ps1 -SkipStandalone
+      - shell: pwsh
         run: choco install innosetup --yes --no-progress
       - shell: pwsh
         run: iscc installer/windows/blakelabs-multimedia.iss
       - uses: actions/upload-artifact@v4
         with:
           name: BlakeLabsMultimedia-Windows-x64
-          path: build/installer/BlakeLabsMultimedia-Setup-x64.exe
+          path: |
+            build/installer/BlakeLabsMultimedia-Setup-x64.exe
+            build/msix/BlakeLabsMultimedia-Store-x64.msix
           if-no-files-found: error
 
   linux-bundle:

@@ -6,14 +6,17 @@ BlakeLabs Multimedia turns FFmpeg into a clean Windows and Linux desktop applica
 
 ## Downloads
 
-Permanent Windows and Linux installers are published on the repository's **Releases** page.
+Permanent Windows and Linux packages are published on the repository's **Releases** page.
 
 Each project version creates:
 
-- `BlakeLabsMultimedia-Setup-x64.exe` — native Windows installer
+- `BlakeLabsMultimedia-Setup-x64.exe` — native Windows installer, currently unsigned
+- `BlakeLabsMultimedia-Store-x64.msix` — unsigned package for Microsoft Store submission
 - `BlakeLabsMultimedia-linux-x64.tar.gz` — standalone Linux bundle
 
-Release files remain attached to the tagged version instead of expiring like temporary GitHub Actions artifacts.
+The Store MSIX is meant to be uploaded to Partner Center, where Microsoft signs it after certification. It is not intended for unsigned direct sideloading from GitHub.
+
+Microsoft Store product: `https://apps.microsoft.com/detail/9NS1J3D51RFX`
 
 ## MVP capabilities
 
@@ -25,7 +28,7 @@ Release files remain attached to the tagged version instead of expiring like tem
 - Atomic output publishing: originals are never overwritten
 - Configurable output directory remembered with native settings
 - Seven built-in recipes: MP4 Universal, MP4 Compact, WebM, MP3, FLAC, WAV and GIF
-- Windows standalone build and Inno Setup installer
+- Windows standalone build, Inno Setup installer and Store MSIX
 - Linux standalone compressed bundle
 - Bundled FFmpeg/FFprobe in release builds, with system and environment-variable fallback for development
 
@@ -81,6 +84,16 @@ iscc installer/windows/blakelabs-multimedia.iss
 
 Output: `build/installer/BlakeLabsMultimedia-Setup-x64.exe`.
 
+### Microsoft Store MSIX
+
+```powershell
+./scripts/build_msix.ps1
+```
+
+Output: `build/msix/BlakeLabsMultimedia-Store-x64.msix`.
+
+The package uses the Store identity assigned to Blake Labs and is validated by `MakeAppx.exe`. See [docs/microsoft-store.md](docs/microsoft-store.md) for the Partner Center workflow and identity details.
+
 ### Linux bundle
 
 ```bash
@@ -89,7 +102,7 @@ Output: `build/installer/BlakeLabsMultimedia-Setup-x64.exe`.
 
 Output: `build/linux/BlakeLabsMultimedia-linux-x64.tar.gz`.
 
-The `Native builds and releases` workflow validates both packages in pull requests. After a version bump reaches `main`, it creates the corresponding GitHub Release and permanently attaches both files.
+The `Native builds and releases` workflow validates all packages in pull requests. After a version bump reaches `main`, it creates the corresponding GitHub Release and permanently attaches the generated files.
 
 ## Output safety
 
