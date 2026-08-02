@@ -71,6 +71,49 @@ jobs:
         run: ./scripts/build_windows.ps1
       - shell: pwsh
         run: ./scripts/build_msix.ps1 -SkipStandalone
+      - name: Load real music with the packaged Windows executable
+        timeout-minutes: 2
+        shell: pwsh
+        run: |
+          $env:SMOKE_MEDIA = Join-Path $env:RUNNER_TEMP "blakelabs-smoke.wav"
+          $env:BLAKELABS_SMOKE_MEDIA = $env:SMOKE_MEDIA
+          $env:BLAKELABS_SCREENSHOT_PATH = Join-Path $env:RUNNER_TEMP "blakelabs-windows-ui.png"
+          $env:BLAKELABS_SCREENSHOT_DELAY_MS = "2200"
+          $env:BLAKELABS_SMOKE_EXIT_MS = "3800"
+          $env:QT_QPA_PLATFORM = "offscreen"
+          $env:QT_QUICK_BACKEND = "software"
+
+          @'
+          import math
+          import os
+          import struct
+          import wave
+
+          sample_rate = 44_100
+          with wave.open(os.environ["SMOKE_MEDIA"], "wb") as audio:
+              audio.setnchannels(1)
+              audio.setsampwidth(2)
+              audio.setframerate(sample_rate)
+              frames = (
+                  struct.pack("<h", round(7_000 * math.sin(2 * math.pi * 440 * index / sample_rate)))
+                  for index in range(sample_rate)
+              )
+              audio.writeframes(b"".join(frames))
+          '@ | python -
+
+          & ".\build\windows\BlakeLabsMultimedia\BlakeLabsMultimedia.exe"
+          if ($LASTEXITCODE -ne 0) {
+            throw "Packaged application exited with code $LASTEXITCODE"
+          }
+          if (-not (Test-Path $env:BLAKELABS_SCREENSHOT_PATH)) {
+            throw "Packaged application did not produce the UI smoke screenshot"
+          }
+      - name: Upload packaged Windows UI screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: UI-smoke-Windows
+          path: ${{ runner.temp }}/blakelabs-windows-ui.png
+          if-no-files-found: error
       - shell: pwsh
         run: choco install innosetup --yes --no-progress
       - shell: pwsh
