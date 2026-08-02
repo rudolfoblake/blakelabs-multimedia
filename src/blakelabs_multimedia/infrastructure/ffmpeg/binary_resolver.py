@@ -26,9 +26,7 @@ class FfmpegBinaryResolver:
             candidate = Path(configured).expanduser()
             if candidate.is_file():
                 return candidate.resolve()
-            raise BinaryNotFoundError(
-                f"{environment_key} points to a missing file: {candidate}"
-            )
+            raise BinaryNotFoundError(f"{environment_key} points to a missing file: {candidate}")
 
         executable_name = f"{binary_name}.exe" if sys.platform == "win32" else binary_name
         platform_name = "windows-x64" if sys.platform == "win32" else "linux-x64"

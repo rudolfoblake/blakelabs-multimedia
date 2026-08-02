@@ -119,9 +119,7 @@ class MediaQueueModel(QAbstractListModel):
             return
         self._items[row].update(values)
         model_index = self.index(row, 0)
-        changed_roles = [
-            role for role, name in self.roleNames().items() if name.decode() in values
-        ]
+        changed_roles = [role for role, name in self.roleNames().items() if name.decode() in values]
         self.dataChanged.emit(model_index, model_index, changed_roles)
 
 
