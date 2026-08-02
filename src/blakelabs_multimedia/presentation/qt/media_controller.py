@@ -72,9 +72,7 @@ class MediaController(QObject):
         self._video_crf = self._read_int("advanced/videoCrf", 0)
         self._video_bitrate = self._read_int("advanced/videoBitrate", 0)
         self._video_max_width = self._read_int("advanced/videoMaxWidth", 0)
-        self._video_encoder_preset = str(
-            self._settings.value("advanced/videoEncoderPreset", "")
-        )
+        self._video_encoder_preset = str(self._settings.value("advanced/videoEncoderPreset", ""))
         self._normalize_audio = self._read_bool("advanced/normalizeAudio", False)
         self._preserve_metadata = self._read_bool("advanced/preserveMetadata", True)
 
@@ -180,7 +178,7 @@ class MediaController(QObject):
             if self._audio_bitrate and not self.selectedPresetIsLossless:
                 parts.append(f"{self._audio_bitrate} kbps audio")
             if self._audio_sample_rate:
-                parts.append(f"{self._audio_sample_rate // 1000:g} kHz")
+                parts.append(f"{self._audio_sample_rate / 1000:g} kHz")
             if self._audio_channels:
                 parts.append("mono" if self._audio_channels == 1 else "stereo")
             if self._normalize_audio:
