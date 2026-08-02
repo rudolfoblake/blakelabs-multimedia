@@ -23,6 +23,7 @@ dev = [
   "ruff>=0.9",
 ]
 build = [
+  "imageio>=2.37",
   "nuitka==4.1.3",
   "ordered-set>=4.1",
   "pillow>=11.0",
