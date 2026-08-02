@@ -5,6 +5,7 @@ import os
 import sys
 from importlib.resources import as_file, files
 from pathlib import Path
+from types import TracebackType
 
 from PySide6.QtCore import QCoreApplication, QTimer, QUrl
 from PySide6.QtGui import QGuiApplication
@@ -38,7 +39,7 @@ def run() -> int:
     def report_uncaught(
         exception_type: type[BaseException],
         exception: BaseException,
-        traceback: object,
+        traceback: TracebackType | None,
     ) -> None:
         LOGGER.critical(
             "Unhandled exception",
