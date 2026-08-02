@@ -28,23 +28,33 @@ if [[ "$arch" == "x64" && "$machine" != "x86_64" ]]; then
   exit 1
 fi
 
-# GitHub's Intel runner has Xcode installed, but its compiler directory is not always present on
-# PATH. Resolve the selected Xcode toolchain explicitly so Nuitka can locate clang consistently.
-developer_dir="$(xcode-select -p)"
-toolchain_bin="$developer_dir/Toolchains/XcodeDefault.xctoolchain/usr/bin"
-if [[ ! -x "$toolchain_bin/clang" ]]; then
-  clang_path="$(xcrun --find clang)"
-  toolchain_bin="$(dirname "$clang_path")"
+# The Apple Silicon image exposes a working compiler directly. The Intel GitHub image can have
+# Xcode installed without a discoverable clang on PATH. Use xcrun-backed shims there so every
+# compiler invocation also receives the selected macOS SDK sysroot.
+if [[ "$arch" == "x64" ]]; then
+  developer_dir="$(xcode-select -p)"
+  sdk_root="$(xcrun --sdk macosx --show-sdk-path)"
+  compiler_shims="$(mktemp -d)"
+  trap 'rm -rf "$compiler_shims"' EXIT
+
+  cat > "$compiler_shims/clang" <<EOF
+#!/usr/bin/env bash
+exec xcrun --sdk macosx clang -isysroot "$sdk_root" "\$@"
+EOF
+  cat > "$compiler_shims/clang++" <<EOF
+#!/usr/bin/env bash
+exec xcrun --sdk macosx clang++ -isysroot "$sdk_root" "\$@"
+EOF
+  chmod +x "$compiler_shims/clang" "$compiler_shims/clang++"
+
+  export DEVELOPER_DIR="$developer_dir"
+  export SDKROOT="$sdk_root"
+  export PATH="$compiler_shims:$PATH"
+  export CC=clang
+  export CXX=clang++
 fi
-if [[ ! -x "$toolchain_bin/clang" ]]; then
-  printf 'Unable to locate clang in the selected Xcode toolchain.\n' >&2
-  exit 1
-fi
-export DEVELOPER_DIR="$developer_dir"
-export PATH="$toolchain_bin:$PATH"
-export CC="$toolchain_bin/clang"
-export CXX="$toolchain_bin/clang++"
-"$CC" --version
+
+clang --version
 
 version="$(python3 - <<'PY'
 import tomllib
