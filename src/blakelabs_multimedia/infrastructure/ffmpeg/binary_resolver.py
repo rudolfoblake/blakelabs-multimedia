@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import platform
 import shutil
 import sys
 from importlib.resources import files
@@ -29,12 +30,13 @@ class FfmpegBinaryResolver:
             raise BinaryNotFoundError(f"{environment_key} points to a missing file: {candidate}")
 
         executable_name = f"{binary_name}.exe" if sys.platform == "win32" else binary_name
-        platform_name = "windows-x64" if sys.platform == "win32" else "linux-x64"
-        packaged = files("blakelabs_multimedia").joinpath(
-            "resources", "bin", platform_name, executable_name
-        )
-        if packaged.is_file():
-            return Path(str(packaged))
+        platform_name = packaged_platform_name()
+        if platform_name is not None:
+            packaged = files("blakelabs_multimedia").joinpath(
+                "resources", "bin", platform_name, executable_name
+            )
+            if packaged.is_file():
+                return Path(str(packaged))
 
         system_binary = shutil.which(binary_name)
         if system_binary:
@@ -43,3 +45,22 @@ class FfmpegBinaryResolver:
         raise BinaryNotFoundError(
             f"{binary_name} was not found. Install FFmpeg or set {environment_key}."
         )
+
+
+def packaged_platform_name(
+    system_platform: str | None = None,
+    machine: str | None = None,
+) -> str | None:
+    current_platform = system_platform or sys.platform
+    current_machine = (machine or platform.machine()).lower().replace("_", "-")
+
+    if current_platform == "win32":
+        return "windows-x64" if current_machine in {"amd64", "x86-64", "x64"} else None
+    if current_platform.startswith("linux"):
+        return "linux-x64" if current_machine in {"amd64", "x86-64", "x64"} else None
+    if current_platform == "darwin":
+        if current_machine in {"arm64", "aarch64"}:
+            return "macos-arm64"
+        if current_machine in {"amd64", "x86-64", "x64"}:
+            return "macos-x64"
+    return None
