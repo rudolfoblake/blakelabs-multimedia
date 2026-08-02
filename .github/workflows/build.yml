@@ -114,11 +114,24 @@ jobs:
             if (Test-Path -LiteralPath $env:BLAKELABS_SCREENSHOT_PATH) {
               $screenshot = Get-Item -LiteralPath $env:BLAKELABS_SCREENSHOT_PATH
               if ($screenshot.Length -gt 1024) {
-                $header = Get-Content `
-                  -LiteralPath $env:BLAKELABS_SCREENSHOT_PATH `
-                  -Encoding Byte `
-                  -TotalCount 8
-                if ([Convert]::ToHexString($header) -eq "89504E470D0A1A0A") {
+                $header = [byte[]]::new(8)
+                $stream = [System.IO.File]::Open(
+                  $env:BLAKELABS_SCREENSHOT_PATH,
+                  [System.IO.FileMode]::Open,
+                  [System.IO.FileAccess]::Read,
+                  [System.IO.FileShare]::ReadWrite
+                )
+                try {
+                  $bytesRead = $stream.Read($header, 0, $header.Length)
+                }
+                finally {
+                  $stream.Dispose()
+                }
+
+                if (
+                  $bytesRead -eq 8 -and
+                  [Convert]::ToHexString($header) -eq "89504E470D0A1A0A"
+                ) {
                   $screenshotReady = $true
                   break
                 }
@@ -141,7 +154,7 @@ jobs:
             throw "Packaged application did not produce a valid UI smoke screenshot within 30 seconds"
           }
 
-          if (-not $application.WaitForExit(20_000)) {
+          if (-not $application.WaitForExit(20000)) {
             Stop-Process -Id $application.Id -Force
             $application.WaitForExit()
             throw "Packaged application produced the screenshot but did not exit cleanly"
