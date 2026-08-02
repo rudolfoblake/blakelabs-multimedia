@@ -41,7 +41,7 @@ class MediaController(QObject):
         configured_output = str(self._settings.value("conversion/outputDirectory", ""))
         self._output_directory = Path(configured_output) if configured_output else None
 
-    @Property("QVariantList", constant=True)
+    @Property(list, constant=True)
     def presets(self) -> list[dict[str, object]]:
         return [
             {
