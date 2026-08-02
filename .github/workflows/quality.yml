@@ -23,12 +23,46 @@ jobs:
       - run: uv run ruff format --check .
       - run: uv run mypy src scripts
       - run: uv run pytest --cov --cov-report=term-missing
-      - name: Install Qt runtime libraries
+      - name: Install Qt and FFmpeg runtime libraries
         run: |
           sudo apt-get update
-          sudo apt-get install --yes libegl1 libgl1
-      - name: QML offscreen startup smoke test
+          sudo apt-get install --yes ffmpeg libegl1 libgl1
+      - name: Create real audio smoke fixture
+        env:
+          SMOKE_MEDIA: ${{ runner.temp }}/blakelabs-smoke.wav
+        run: |
+          python3 - <<'PY'
+          import math
+          import os
+          import struct
+          import wave
+          from pathlib import Path
+
+          destination = Path(os.environ["SMOKE_MEDIA"])
+          sample_rate = 44_100
+          with wave.open(str(destination), "wb") as audio:
+              audio.setnchannels(1)
+              audio.setsampwidth(2)
+              audio.setframerate(sample_rate)
+              frames = (
+                  struct.pack("<h", round(7_000 * math.sin(2 * math.pi * 440 * index / sample_rate)))
+                  for index in range(sample_rate)
+              )
+              audio.writeframes(b"".join(frames))
+          PY
+      - name: Load real music through the complete QML application
+        timeout-minutes: 1
         env:
           QT_QPA_PLATFORM: offscreen
-          BLAKELABS_SMOKE_EXIT_MS: "300"
+          QT_QUICK_BACKEND: software
+          BLAKELABS_SMOKE_MEDIA: ${{ runner.temp }}/blakelabs-smoke.wav
+          BLAKELABS_SCREENSHOT_PATH: ${{ runner.temp }}/blakelabs-ui-smoke.png
+          BLAKELABS_SCREENSHOT_DELAY_MS: "1600"
+          BLAKELABS_SMOKE_EXIT_MS: "2800"
         run: uv run blakelabs-multimedia
+      - name: Upload UI smoke screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: BlakeLabsMultimedia-UI-smoke
+          path: ${{ runner.temp }}/blakelabs-ui-smoke.png
+          if-no-files-found: error
