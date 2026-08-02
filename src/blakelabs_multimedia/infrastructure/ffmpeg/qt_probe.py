@@ -77,10 +77,10 @@ class QtFfprobeMediaProbe:
         finished_once = False
 
         def read_stdout() -> None:
-            stdout.extend(bytes(process.readAllStandardOutput()))
+            stdout.extend(process.readAllStandardOutput().data())
 
         def read_stderr() -> None:
-            stderr.extend(bytes(process.readAllStandardError()))
+            stderr.extend(process.readAllStandardError().data())
 
         def cleanup() -> None:
             self._processes.pop(process_id, None)

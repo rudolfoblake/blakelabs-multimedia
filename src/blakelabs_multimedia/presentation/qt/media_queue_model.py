@@ -5,7 +5,15 @@ from pathlib import Path
 from typing import Any
 from uuid import UUID
 
-from PySide6.QtCore import Property, QAbstractListModel, QModelIndex, Qt, Signal
+from PySide6.QtCore import (
+    Property,
+    QAbstractListModel,
+    QByteArray,
+    QModelIndex,
+    QPersistentModelIndex,
+    Qt,
+    Signal,
+)
 
 from blakelabs_multimedia.domain.jobs import JobStatus, MediaJob
 from blakelabs_multimedia.domain.media import MediaAsset
@@ -24,6 +32,20 @@ class _Role(IntEnum):
     PROGRESS = Qt.ItemDataRole.UserRole + 10
 
 
+_ROLE_KEYS: dict[int, str] = {
+    int(_Role.ID): "jobId",
+    int(_Role.NAME): "name",
+    int(_Role.PATH): "sourcePath",
+    int(_Role.STATUS): "status",
+    int(_Role.STATUS_LABEL): "statusLabel",
+    int(_Role.DETAIL): "detail",
+    int(_Role.KIND): "kind",
+    int(_Role.DURATION): "duration",
+    int(_Role.FILE_SIZE): "fileSize",
+    int(_Role.PROGRESS): "progress",
+}
+
+
 class MediaQueueModel(QAbstractListModel):
     """Observable queue state consumed by QML."""
 
@@ -37,30 +59,26 @@ class MediaQueueModel(QAbstractListModel):
     def count(self) -> int:
         return len(self._items)
 
-    def roleNames(self) -> dict[int, bytes]:
-        return {
-            int(_Role.ID): b"jobId",
-            int(_Role.NAME): b"name",
-            int(_Role.PATH): b"sourcePath",
-            int(_Role.STATUS): b"status",
-            int(_Role.STATUS_LABEL): b"statusLabel",
-            int(_Role.DETAIL): b"detail",
-            int(_Role.KIND): b"kind",
-            int(_Role.DURATION): b"duration",
-            int(_Role.FILE_SIZE): b"fileSize",
-            int(_Role.PROGRESS): b"progress",
-        }
+    def roleNames(self) -> dict[int, QByteArray]:
+        return {role: QByteArray(key.encode()) for role, key in _ROLE_KEYS.items()}
 
-    def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:  # noqa: B008
+    def rowCount(  # noqa: B008
+        self,
+        parent: QModelIndex | QPersistentModelIndex = QModelIndex(),
+    ) -> int:
         return 0 if parent.isValid() else len(self._items)
 
-    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
+    def data(
+        self,
+        index: QModelIndex | QPersistentModelIndex,
+        role: int = Qt.ItemDataRole.DisplayRole,
+    ) -> Any:
         if not index.isValid() or not 0 <= index.row() < len(self._items):
             return None
-        role_name = self.roleNames().get(role)
-        if role_name is None:
+        key = _ROLE_KEYS.get(role)
+        if key is None:
             return None
-        return self._items[index.row()].get(role_name.decode())
+        return self._items[index.row()].get(key)
 
     def add_analyzing(self, job: MediaJob) -> None:
         row = len(self._items)
@@ -119,7 +137,7 @@ class MediaQueueModel(QAbstractListModel):
             return
         self._items[row].update(values)
         model_index = self.index(row, 0)
-        changed_roles = [role for role, name in self.roleNames().items() if name.decode() in values]
+        changed_roles = [role for role, key in _ROLE_KEYS.items() if key in values]
         self.dataChanged.emit(model_index, model_index, changed_roles)
 
 

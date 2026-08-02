@@ -98,8 +98,10 @@ def _safe_size(path: Path) -> int:
 
 
 def _integer(value: object) -> int | None:
+    if not isinstance(value, str | bytes | bytearray | int | float):
+        return None
     try:
-        return int(value) if value is not None else None
+        return int(value)
     except (TypeError, ValueError):
         return None
 
