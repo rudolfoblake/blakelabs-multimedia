@@ -22,8 +22,9 @@ Rectangle {
   required property bool canOpen
   signal cancelRequested(string jobId)
   signal openRequested(string jobId)
+  signal diagnosticsRequested()
 
-  implicitHeight: 126
+  implicitHeight: root.status === "failed" ? 148 : 126
   radius: Theme.radiusMedium
   color: mouseArea.containsMouse ? Theme.surfaceHover : Theme.surfaceRaised
   border.width: 1
@@ -47,6 +48,7 @@ Rectangle {
   }
 
   Behavior on color { ColorAnimation { duration: 120 } }
+  Behavior on implicitHeight { NumberAnimation { duration: 140 } }
 
   MouseArea {
     id: mouseArea
@@ -65,13 +67,15 @@ Rectangle {
       Layout.preferredHeight: 48
       Layout.alignment: Qt.AlignTop
       radius: 14
-      color: root.status === "failed" ? "#2A1519" : "#14261B"
+      color: root.status === "failed" ? "#291418" : Theme.accentSoft
+      border.width: 1
+      border.color: root.status === "failed" ? "#5B2730" : Theme.borderStrong
 
       Text {
         anchors.centerIn: parent
-        text: root.kind === "audio" ? "A" : (root.kind === "video" ? "V" : "…")
+        text: root.kind === "audio" ? "♪" : (root.kind === "video" ? "▷" : "…")
         color: root.status === "failed" ? Theme.danger : Theme.accent
-        font.pixelSize: 14
+        font.pixelSize: 18
         font.weight: Font.Bold
       }
     }
@@ -115,9 +119,11 @@ Rectangle {
       Text {
         Layout.fillWidth: true
         text: root.detail
-        color: Theme.textMuted
+        color: root.status === "failed" ? "#FFB4BD" : Theme.textMuted
         font.pixelSize: 10
-        elide: Text.ElideMiddle
+        elide: root.status === "failed" ? Text.ElideNone : Text.ElideMiddle
+        wrapMode: root.status === "failed" ? Text.WordWrap : Text.NoWrap
+        maximumLineCount: root.status === "failed" ? 2 : 1
       }
 
       RowLayout {
@@ -159,6 +165,22 @@ Rectangle {
           color: Theme.textMuted
           font.pixelSize: 9
           elide: Text.ElideRight
+        }
+
+        Button {
+          visible: root.status === "failed"
+          text: "Diagnostics"
+          flat: true
+          onClicked: root.diagnosticsRequested()
+
+          contentItem: Text {
+            text: parent.text
+            color: Theme.textMuted
+            font.pixelSize: 10
+            font.weight: Font.DemiBold
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+          }
         }
 
         Button {
