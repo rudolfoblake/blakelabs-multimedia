@@ -148,5 +148,6 @@ class QtFfprobeMediaProbe:
         process.errorOccurred.connect(process_error)
         timeout.timeout.connect(timed_out)
         process.start()
+        process.closeWriteChannel()
         timeout.start()
         return _QtProcessHandle(process)
