@@ -101,9 +101,35 @@ jobs:
           path: build/linux/BlakeLabsMultimedia-linux-x64.tar.gz
           if-no-files-found: error
 
+  macos-bundle:
+    name: macOS ${{ matrix.arch }} DMG
+    needs: plan
+    if: needs.plan.outputs.build == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: arm64
+          - runner: macos-15-intel
+            arch: x64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - run: bash scripts/build_macos.sh "${{ matrix.arch }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BlakeLabsMultimedia-macOS-${{ matrix.arch }}
+          path: build/macos/BlakeLabsMultimedia-macos-${{ matrix.arch }}.dmg
+          if-no-files-found: error
+
   publish-release:
     name: Publish permanent GitHub Release
-    needs: [plan, windows-installer, linux-bundle]
+    needs: [plan, windows-installer, linux-bundle, macos-bundle]
     if: needs.plan.outputs.publish == 'true'
     runs-on: ubuntu-latest
     permissions:
