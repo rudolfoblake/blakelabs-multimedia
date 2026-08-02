@@ -11,8 +11,12 @@ Button {
 
   background: Rectangle {
     radius: 14
-    color: root.down ? Theme.accentStrong : (root.hovered ? "#9BFFA9" : Theme.accent)
-    scale: root.down ? 0.98 : 1
+    color: !root.enabled ? Theme.border
+           : root.down ? Theme.accentStrong
+           : root.hovered ? "#9BFFA9"
+           : Theme.accent
+    scale: root.down && root.enabled ? 0.98 : 1
+    opacity: root.enabled ? 1 : 0.62
 
     Behavior on color { ColorAnimation { duration: 100 } }
     Behavior on scale { NumberAnimation { duration: 90 } }
@@ -20,8 +24,8 @@ Button {
 
   contentItem: Text {
     text: root.text
-    color: Theme.background
-    font.pixelSize: 14
+    color: root.enabled ? Theme.background : Theme.textMuted
+    font.pixelSize: 13
     font.weight: Font.Bold
     horizontalAlignment: Text.AlignHCenter
     verticalAlignment: Text.AlignVCenter
