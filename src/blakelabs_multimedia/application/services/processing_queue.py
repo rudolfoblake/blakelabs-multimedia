@@ -6,7 +6,10 @@ from pathlib import Path
 from uuid import UUID
 
 from blakelabs_multimedia.application.ports.media_probe import CancelHandle
-from blakelabs_multimedia.application.ports.media_processor import MediaProcessorPort, ProcessingObserver
+from blakelabs_multimedia.application.ports.media_processor import (
+    MediaProcessorPort,
+    ProcessingObserver,
+)
 from blakelabs_multimedia.domain.conversion import ProcessingProgress, ProcessingRequest
 
 
