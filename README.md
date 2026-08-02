@@ -1,21 +1,69 @@
 # BlakeLabs Multimedia
 
-Cross-platform desktop multimedia toolkit by Blake Labs.
+A native, cross-platform multimedia workspace by **Blake Labs**.
 
-The project is being built as a modular Python application powered by FFmpeg, with a native premium interface for Windows and Linux.
+BlakeLabs Multimedia is being built in Python with PySide6, Qt Quick/QML and FFmpeg. The goal is a premium Windows and Linux application for conversion, compression, extraction, trimming and other practical media operations without exposing users to command-line complexity.
 
-## Status
+## Current foundation
 
-Early foundation. Product code is developed through focused pull requests.
+The first executable vertical slice includes:
 
-## Product principles
+- Responsive Blake Labs desktop shell
+- Drag-and-drop and multi-file selection
+- Non-blocking FFprobe analysis through `QProcess`
+- Observable session queue
+- Clean architecture boundaries
+- Unit tests and pull-request quality gates
 
-- Native-feeling, responsive and fluid desktop experience
-- No blocking work on the UI thread
-- Modular architecture with explicit boundaries
-- FFmpeg and FFprobe isolated behind application ports
-- Windows-first packaging without coupling the core to Windows
-- Linux support treated as a first-class target
-- Accessible defaults with advanced controls available progressively
+Conversion is intentionally scheduled for a focused follow-up PR.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) before making changes.
+## Architecture
+
+```text
+presentation -> application -> domain
+infrastructure -> application -> domain
+bootstrap -> composition only
+```
+
+The GUI never builds FFmpeg commands and long-running processes never block the UI thread. See [docs/architecture.md](docs/architecture.md) for the full boundary rules.
+
+## Development
+
+Requirements:
+
+- Python 3.12+
+- `uv`
+- FFmpeg available on `PATH` during development
+
+```bash
+uv sync --all-groups
+uv run blakelabs-multimedia
+```
+
+Override binary discovery when needed:
+
+```bash
+BLAKELABS_FFPROBE=/path/to/ffprobe uv run blakelabs-multimedia
+BLAKELABS_FFMPEG=/path/to/ffmpeg uv run blakelabs-multimedia
+```
+
+## Quality gates
+
+```bash
+uv run ruff check .
+uv run ruff format --check .
+uv run mypy src
+uv run pytest
+```
+
+## Roadmap
+
+Development is split into focused pull requests. See [docs/roadmap.md](docs/roadmap.md).
+
+## Contributing
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md). Feature development goes through focused branches and draft pull requests.
+
+## License
+
+License selection is pending. Until a license is added, no permission is granted to copy, modify or redistribute the source.
