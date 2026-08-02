@@ -13,12 +13,7 @@ def test_resolves_binary_bundled_next_to_packaged_executable(
     packaged_executable = tmp_path / "BlakeLabsMultimedia.exe"
     packaged_executable.touch()
     bundled_ffprobe = (
-        tmp_path
-        / "blakelabs_multimedia"
-        / "resources"
-        / "bin"
-        / "windows-x64"
-        / "ffprobe.exe"
+        tmp_path / "blakelabs_multimedia" / "resources" / "bin" / "windows-x64" / "ffprobe.exe"
     )
     bundled_ffprobe.parent.mkdir(parents=True)
     bundled_ffprobe.touch()
