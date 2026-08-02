@@ -9,9 +9,7 @@ description = "Native cross-platform multimedia toolkit powered by FFmpeg."
 readme = "README.md"
 requires-python = ">=3.12"
 authors = [{ name = "Blake Labs" }]
-dependencies = [
-  "PySide6>=6.8,<7",
-]
+dependencies = ["PySide6>=6.8,<7"]
 
 [project.scripts]
 blakelabs-multimedia = "blakelabs_multimedia.__main__:main"
@@ -23,24 +21,36 @@ dev = [
   "pytest-cov>=6.0",
   "ruff>=0.9",
 ]
+build = [
+  "nuitka>=2.7",
+  "ordered-set>=4.1",
+  "zstandard>=0.23",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/blakelabs_multimedia"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"src/blakelabs_multimedia/presentation/qml" = "blakelabs_multimedia/presentation/qml"
+"src/blakelabs_multimedia/resources" = "blakelabs_multimedia/resources"
 
 [tool.hatch.build.targets.sdist]
 include = [
   "/src",
   "/tests",
   "/docs",
+  "/scripts",
+  "/installer",
   "/README.md",
   "/CONTRIBUTING.md",
+  "/THIRD_PARTY_NOTICES.md",
   "/pyproject.toml",
 ]
 
 [tool.ruff]
 target-version = "py312"
 line-length = 100
-src = ["src", "tests"]
+src = ["src", "tests", "scripts"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
@@ -51,7 +61,7 @@ indent-style = "space"
 
 [tool.mypy]
 python_version = "3.12"
-files = ["src"]
+files = ["src", "scripts"]
 disallow_untyped_defs = true
 check_untyped_defs = true
 warn_unused_ignores = true
