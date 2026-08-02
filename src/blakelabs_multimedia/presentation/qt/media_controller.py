@@ -1,9 +1,19 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from uuid import UUID
 
-from PySide6.QtCore import Property, QObject, QSettings, QUrl, Signal, Slot
+from PySide6.QtCore import (
+    Property,
+    QObject,
+    QSettings,
+    QStandardPaths,
+    QTimer,
+    QUrl,
+    Signal,
+    Slot,
+)
 from PySide6.QtGui import QDesktopServices
 
 from blakelabs_multimedia.application.ports.media_probe import CancelHandle
@@ -19,6 +29,8 @@ from blakelabs_multimedia.domain.jobs import MediaJob
 from blakelabs_multimedia.domain.media import MediaAsset
 from blakelabs_multimedia.infrastructure.ffmpeg.command_builder import choose_output_path
 from blakelabs_multimedia.presentation.qt.media_queue_model import MediaQueueModel
+
+LOGGER = logging.getLogger(__name__)
 
 
 class MediaController(QObject):
@@ -37,9 +49,19 @@ class MediaController(QObject):
         self._processing_queue = processing_queue
         self._active_probes: dict[UUID, CancelHandle] = {}
         self._settings = QSettings()
-        self._selected_preset_id = str(self._settings.value("conversion/preset", "mp4-balanced"))
+
+        configured_preset = str(self._settings.value("conversion/preset", "mp4-balanced"))
+        try:
+            find_preset(configured_preset)
+            self._selected_preset_id = configured_preset
+        except KeyError:
+            self._selected_preset_id = "mp4-balanced"
+
         configured_output = str(self._settings.value("conversion/outputDirectory", ""))
-        self._output_directory = Path(configured_output) if configured_output else None
+        output_directory = Path(configured_output) if configured_output else None
+        self._output_directory = (
+            output_directory if output_directory is not None and output_directory.is_dir() else None
+        )
 
     @Property(list, constant=True)
     def presets(self) -> list[dict[str, object]]:
@@ -58,22 +80,38 @@ class MediaController(QObject):
     def selectedPresetId(self) -> str:
         return self._selected_preset_id
 
+    @Property(str, notify=selectedPresetChanged)
+    def selectedPresetTitle(self) -> str:
+        return find_preset(self._selected_preset_id).title
+
+    @Property(str, notify=selectedPresetChanged)
+    def selectedPresetDescription(self) -> str:
+        return find_preset(self._selected_preset_id).description
+
+    @Property(str, notify=selectedPresetChanged)
+    def selectedPresetExtension(self) -> str:
+        return find_preset(self._selected_preset_id).extension.upper()
+
     @Property(str, notify=outputDirectoryChanged)
     def outputDirectoryLabel(self) -> str:
         return str(self._output_directory) if self._output_directory else "Same folder as source"
 
     @Slot(list)
     def addFiles(self, urls: list[object]) -> None:
+        accepted = 0
         for raw_url in urls:
             path = self._to_local_path(raw_url)
             if path is not None and path.is_file():
                 self._add_file(path)
+                accepted += 1
+        LOGGER.info("Accepted %s local media file(s) from the UI", accepted)
 
     @Slot(str)
     def selectPreset(self, preset_id: str) -> None:
         try:
             find_preset(preset_id)
         except KeyError:
+            LOGGER.warning("Ignoring unknown preset selected by UI: %s", preset_id)
             return
         if self._selected_preset_id == preset_id:
             return
@@ -101,10 +139,7 @@ class MediaController(QObject):
 
     @Slot()
     def startReady(self) -> None:
-        try:
-            preset = find_preset(self._selected_preset_id)
-        except KeyError:
-            return
+        preset = find_preset(self._selected_preset_id)
         for job_id, asset in self._queue_model.ready_entries():
             if not preset.accepts(asset.kind):
                 self._queue_model.mark_failed(
@@ -129,6 +164,12 @@ class MediaController(QObject):
             job_id = UUID(raw_job_id)
         except ValueError:
             return
+        probe = self._active_probes.pop(job_id, None)
+        if probe is not None:
+            probe.cancel()
+            self._queue_model.mark_cancelled(job_id)
+            LOGGER.info("Cancelled media analysis for job %s", job_id)
+            return
         self._processing_queue.cancel(job_id)
 
     @Slot(str)
@@ -142,12 +183,23 @@ class MediaController(QObject):
             QDesktopServices.openUrl(QUrl.fromLocalFile(str(output.parent)))
 
     @Slot()
+    def openDiagnosticsFolder(self) -> None:
+        diagnostics = Path(
+            QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppLocalDataLocation)
+        ) / "logs"
+        diagnostics.mkdir(parents=True, exist_ok=True)
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(diagnostics)))
+
+    @Slot()
     def clearFinished(self) -> None:
         self._queue_model.clear_finished()
 
     def _add_file(self, path: Path) -> None:
         job = MediaJob(source=path)
         self._queue_model.add_analyzing(job)
+        QTimer.singleShot(0, lambda current_job=job: self._begin_probe(current_job))
+
+    def _begin_probe(self, job: MediaJob) -> None:
         settled = False
 
         def completed(asset: MediaAsset, job_id: UUID = job.id) -> None:
@@ -162,7 +214,12 @@ class MediaController(QObject):
             self._queue_model.mark_failed(job_id, message)
             self._active_probes.pop(job_id, None)
 
-        handle = self._probe_media.execute(path, completed=completed, failed=failed)
+        try:
+            handle = self._probe_media.execute(job.source, completed=completed, failed=failed)
+        except Exception:
+            LOGGER.exception("Unexpected media analysis failure for %s", job.source)
+            failed("Unexpected error while analyzing this file. See diagnostics for details.")
+            return
         if not settled:
             self._active_probes[job.id] = handle
 
