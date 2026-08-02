@@ -1,17 +1,65 @@
-name: Native builds
+name: Native builds and releases
 
 on:
   pull_request:
   workflow_dispatch:
   push:
+    branches: [main]
     tags: ["v*"]
 
 permissions:
   contents: read
 
 jobs:
+  plan:
+    name: Plan native distribution
+    runs-on: ubuntu-latest
+    outputs:
+      build: ${{ steps.plan.outputs.build }}
+      publish: ${{ steps.plan.outputs.publish }}
+      tag: ${{ steps.plan.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: plan
+        name: Resolve version and release state
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          version="$(python3 - <<'PY'
+          import tomllib
+          from pathlib import Path
+
+          data = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
+          print(data["project"]["version"])
+          PY
+          )"
+
+          if [[ "${GITHUB_REF_TYPE:-}" == "tag" ]]; then
+            tag="$GITHUB_REF_NAME"
+          else
+            tag="v$version"
+          fi
+
+          build=true
+          publish=false
+
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+              build=false
+            else
+              publish=true
+            fi
+          fi
+
+          echo "build=$build" >> "$GITHUB_OUTPUT"
+          echo "publish=$publish" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
   windows-installer:
     name: Windows x64 installer
+    needs: plan
+    if: needs.plan.outputs.build == 'true'
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,6 +81,8 @@ jobs:
 
   linux-bundle:
     name: Linux x64 bundle
+    needs: plan
+    if: needs.plan.outputs.build == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -46,3 +96,28 @@ jobs:
           name: BlakeLabsMultimedia-Linux-x64
           path: build/linux/BlakeLabsMultimedia-linux-x64.tar.gz
           if-no-files-found: error
+
+  publish-release:
+    name: Publish permanent GitHub Release
+    needs: [plan, windows-installer, linux-bundle]
+    if: needs.plan.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: BlakeLabsMultimedia-*
+          path: release-assets
+          merge-multiple: true
+      - name: Create release and attach installers
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.plan.outputs.tag }}
+        shell: bash
+        run: |
+          gh release create "$RELEASE_TAG" release-assets/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "BlakeLabs Multimedia $RELEASE_TAG" \
+            --generate-notes

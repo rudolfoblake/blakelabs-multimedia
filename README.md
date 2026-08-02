@@ -4,6 +4,17 @@ A premium native audio and video workspace by **Blake Labs**.
 
 BlakeLabs Multimedia turns FFmpeg into a clean Windows and Linux desktop application. Files stay local, the interface stays responsive, and the user does not need to understand codecs, filters or terminal syntax.
 
+## Downloads
+
+Permanent Windows and Linux installers are published on the repository's **Releases** page.
+
+Each project version creates:
+
+- `BlakeLabsMultimedia-Setup-x64.exe` — native Windows installer
+- `BlakeLabsMultimedia-linux-x64.tar.gz` — standalone Linux bundle
+
+Release files remain attached to the tagged version instead of expiring like temporary GitHub Actions artifacts.
+
 ## MVP capabilities
 
 - Drag-and-drop and multi-file selection
@@ -78,7 +89,7 @@ Output: `build/installer/BlakeLabsMultimedia-Setup-x64.exe`.
 
 Output: `build/linux/BlakeLabsMultimedia-linux-x64.tar.gz`.
 
-The `Native builds` GitHub Actions workflow performs both builds on demand and for version tags.
+The `Native builds and releases` workflow validates both packages in pull requests. After a version bump reaches `main`, it creates the corresponding GitHub Release and permanently attaches both files.
 
 ## Output safety
 
