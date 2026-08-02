@@ -13,6 +13,8 @@ def _write_expected_assets(source: Path) -> None:
         "BlakeLabsMultimedia-Setup-x64.exe": source / "installer",
         "BlakeLabsMultimedia-Store-x64.msix": source / "msix",
         "BlakeLabsMultimedia-linux-x64.tar.gz": source / "linux",
+        "BlakeLabsMultimedia-macos-arm64.dmg": source / "macos-arm64",
+        "BlakeLabsMultimedia-macos-x64.dmg": source / "macos-x64",
     }
     for name, directory in paths.items():
         directory.mkdir(parents=True, exist_ok=True)

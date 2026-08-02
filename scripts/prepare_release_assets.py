@@ -10,6 +10,8 @@ EXPECTED_RELEASE_ASSETS = frozenset(
         "BlakeLabsMultimedia-Setup-x64.exe",
         "BlakeLabsMultimedia-Store-x64.msix",
         "BlakeLabsMultimedia-linux-x64.tar.gz",
+        "BlakeLabsMultimedia-macos-arm64.dmg",
+        "BlakeLabsMultimedia-macos-x64.dmg",
     }
 )
 
