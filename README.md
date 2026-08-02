@@ -1,8 +1,50 @@
 # BlakeLabs Multimedia
 
-A premium native audio and video workspace by **Blake Labs**.
+**Professional local audio and video conversion, built natively by Blake Labs.**
 
-BlakeLabs Multimedia turns FFmpeg into a clean Windows, macOS and Linux desktop application. Files stay local, the interface stays responsive, and the user does not need to understand codecs, filters or terminal syntax.
+BlakeLabs Multimedia turns FFmpeg into a focused Windows, macOS and Linux desktop product. Files stay on the device, the UI remains responsive, source files are never overwritten, and both safe presets and professional controls are available without terminal commands.
+
+## Product highlights
+
+- Local, private audio and video processing
+- Drag-and-drop and multi-file queue
+- Real progress, encoding speed and ETA
+- Cancellation with partial-output cleanup
+- Atomic output publication
+- Professional presets for MP4, WebM, MP3, FLAC, WAV and GIF
+- Advanced video quality, bitrate, resolution and encoder-speed controls
+- Advanced audio bitrate, sample-rate, channel and loudness controls
+- Persistent settings and local diagnostics
+- Hardened camera-style MOV to MP4 conversion
+- Native Windows EXE/MSIX, macOS DMG and Linux bundle
+- Blake Labs alien branding across the application and generated packages
+
+## Version 0.4.0
+
+The 0.4 release moves the application from a functional converter to a professional conversion workspace.
+
+### Professional controls
+
+Video:
+
+- CRF quality targets from visually lossless to compact
+- Fixed video bitrate profiles
+- 4K, 1080p, 720p and 480p maximum-width controls
+- Encoder speed from ultra-fast to very slow
+
+Audio:
+
+- 96–320 kbps lossy bitrate overrides
+- 44.1, 48 and 96 kHz sample rates
+- mono and stereo channel controls
+- one-pass loudness normalization targeting -16 LUFS
+- optional source-metadata preservation
+
+All controls can remain on **Preset default**. Advanced values are persisted locally and can be reset in one action.
+
+### MOV compatibility
+
+MP4 Universal now includes primary-stream mapping, timestamp regeneration, auxiliary-stream exclusion, even-dimension scaling, variable-frame-rate handling, larger muxing queues, AAC stereo output and fast-start publication. CI creates a camera-style MOV with MJPEG video and PCM audio, converts it through the real preset and verifies H.264 + AAC output.
 
 ## Downloads
 
@@ -16,26 +58,46 @@ Each project version creates:
 - `BlakeLabsMultimedia-macos-x64.dmg` — Intel Mac disk image
 - `BlakeLabsMultimedia-linux-x64.tar.gz` — standalone Linux bundle
 
-The Store MSIX is meant to be uploaded to Partner Center, where Microsoft signs it after certification. It is not intended for unsigned direct sideloading from GitHub.
+The Store MSIX is uploaded to Partner Center, where Microsoft signs it after certification. It is not intended for unsigned direct sideloading from GitHub.
 
-The macOS DMGs are ad-hoc signed for bundle-integrity validation. Public distribution without Gatekeeper warnings still requires a Developer ID certificate and Apple notarization. See [docs/macos.md](docs/macos.md).
+The macOS DMGs are ad-hoc signed for bundle-integrity validation. Public distribution without Gatekeeper warnings still requires a Developer ID certificate and Apple notarization. See [macOS packaging](docs/macos.md).
 
 Microsoft Store product: `https://apps.microsoft.com/detail/9NS1J3D51RFX`
 
-## MVP capabilities
+## Documentation
 
-- Drag-and-drop and multi-file selection
-- Asynchronous FFprobe inspection
-- Sequential background processing without blocking the UI
-- Real progress, encoding speed and ETA
-- Cancellation with incomplete-output cleanup
-- Atomic output publishing: originals are never overwritten
-- Configurable output directory remembered with native settings
-- Seven built-in recipes: MP4 Universal, MP4 Compact, WebM, MP3, FLAC, WAV and GIF
-- Windows standalone build, Inno Setup installer and Store MSIX
-- Native macOS `.app` and `.dmg` builds for Apple Silicon and Intel
-- Linux standalone compressed bundle
-- Bundled FFmpeg/FFprobe in release builds, with system and environment-variable fallback for development
+- [User guide](docs/user-guide.md)
+- [Advanced conversion reference](docs/advanced-conversion.md)
+- [Architecture](docs/architecture.md)
+- [Microsoft Store submission](docs/microsoft-store.md)
+- [macOS packaging](docs/macos.md)
+- [Privacy policy](docs/privacy-policy.md)
+- [Terms of use](docs/terms-of-use.md)
+- [Third-party notices](THIRD_PARTY_NOTICES.md)
+
+## Built-in presets
+
+| Preset | Output | Purpose |
+|---|---|---|
+| MP4 Universal | H.264 + AAC | Broad phone, TV and web compatibility |
+| MP4 Compact | 720p H.264 + AAC | Smaller files for sharing and storage |
+| WebM Modern | VP9 + Opus | Modern browser delivery |
+| Extract MP3 | MP3 | High-quality audio extraction |
+| FLAC Lossless | FLAC | Lossless archive and listening |
+| WAV Studio | 24-bit PCM WAV | Editing and production |
+| Animated GIF | GIF | Compact looping animation |
+
+## Privacy and output safety
+
+- Media files are processed locally and are not uploaded by the application.
+- Input files are never used as output paths.
+- Output names use `-converted` and a numeric suffix when required.
+- FFmpeg writes to a hidden temporary file.
+- Final output appears only after FFmpeg exits successfully.
+- Cancellation and failure remove incomplete output when possible.
+- Rotating diagnostics remain in the operating system's local app-data directory.
+
+Read the full [Privacy Policy](docs/privacy-policy.md).
 
 ## Architecture
 
@@ -45,7 +107,7 @@ infrastructure -> application -> domain
 bootstrap -> composition only
 ```
 
-The project is a modular monolith. QML owns layout and animation, Python application services coordinate jobs, and FFmpeg details terminate inside infrastructure adapters. See [docs/architecture.md](docs/architecture.md).
+The project is a modular monolith. QML owns layout and interaction, Python application services coordinate jobs, domain models define presets and overrides, and FFmpeg details terminate inside infrastructure adapters.
 
 ## Development
 
@@ -66,7 +128,7 @@ Override binary discovery:
 BLAKELABS_FFPROBE=/path/to/ffprobe BLAKELABS_FFMPEG=/path/to/ffmpeg uv run blakelabs-multimedia
 ```
 
-## Quality gates
+Run quality gates:
 
 ```bash
 uv run ruff check .
@@ -75,7 +137,16 @@ uv run mypy src scripts
 uv run pytest --cov --cov-report=term-missing
 ```
 
-CI also starts the complete QML application using Qt's offscreen platform. This catches missing imports, broken bindings and composition failures.
+Run a real preset conversion using system FFmpeg:
+
+```bash
+uv run python scripts/smoke_ffmpeg_conversion.py \
+  --source camera.mov \
+  --output camera-converted.mp4 \
+  --preset mp4-balanced
+```
+
+CI also launches the complete QML application with real audio, captures the rendered UI, converts a camera-style MOV, and validates every native package.
 
 ## Native builds
 
@@ -89,6 +160,8 @@ iscc installer/windows/blakelabs-multimedia.iss
 
 Output: `build/installer/BlakeLabsMultimedia-Setup-x64.exe`.
 
+The build generates and embeds the Blake Labs alien `.ico` before compiling the executable and installer.
+
 ### Microsoft Store MSIX
 
 ```powershell
@@ -97,19 +170,12 @@ Output: `build/installer/BlakeLabsMultimedia-Setup-x64.exe`.
 
 Output: `build/msix/BlakeLabsMultimedia-Store-x64.msix`.
 
-The package uses the Store identity assigned to Blake Labs and is validated by `MakeAppx.exe`. See [docs/microsoft-store.md](docs/microsoft-store.md) for the Partner Center workflow and identity details.
+Store tile assets are generated from the same alien brand mark. The package uses the identity assigned to Blake Labs and is validated by `MakeAppx.exe`.
 
 ### macOS disk images
 
-On an Apple Silicon Mac:
-
 ```bash
 bash scripts/build_macos.sh arm64
-```
-
-On an Intel Mac:
-
-```bash
 bash scripts/build_macos.sh x64
 ```
 
@@ -117,8 +183,6 @@ Outputs:
 
 - `build/macos/BlakeLabsMultimedia-macos-arm64.dmg`
 - `build/macos/BlakeLabsMultimedia-macos-x64.dmg`
-
-The script creates a native Nuitka `.app`, patches product metadata, performs an offscreen launch smoke test, validates the bundle with ad-hoc code signing and creates a drag-to-Applications DMG.
 
 ### Linux bundle
 
@@ -128,24 +192,12 @@ bash scripts/build_linux.sh
 
 Output: `build/linux/BlakeLabsMultimedia-linux-x64.tar.gz`.
 
-The `Native builds and releases` workflow validates all packages in pull requests. After a version bump reaches `main`, it creates the corresponding GitHub Release and permanently attaches the generated files.
-
-## Output safety
-
-- Input files are never used as output paths.
-- Output names use `-converted` and a numeric suffix when needed.
-- FFmpeg writes to a hidden temporary file.
-- The final file appears only after FFmpeg exits successfully.
-- Cancellation and failure remove partial output.
-
 ## Contributing
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md). Development uses branches and pull requests, even when several MVP capabilities are delivered in one PR.
+Read [CONTRIBUTING.md](CONTRIBUTING.md). Development uses branches and pull requests, with native builds and quality gates required before release.
 
-## Third-party software
+## Licensing
 
-Read [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) before redistribution. Release builds currently bundle GPL FFmpeg variants because the default MP4 presets use `libx264`.
+Third-party components retain their original licenses. Release builds currently bundle GPL FFmpeg variants because the default MP4 presets use `libx264`.
 
-## License
-
-License selection for the BlakeLabs Multimedia source is pending. Until a license is added, no permission is granted to copy, modify or redistribute the source.
+A final source-code license for BlakeLabs Multimedia is still pending. Until one is added, no permission is granted to copy, modify or redistribute the Blake Labs source code beyond rights required by applicable third-party licenses.
