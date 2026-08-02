@@ -68,34 +68,79 @@ def run() -> int:
             return 1
 
         root_window = roots[0]
+        screenshot_path = os.getenv("BLAKELABS_SCREENSHOT_PATH")
+
+        def capture_screenshot() -> bool:
+            if not screenshot_path:
+                return True
+            destination = Path(screenshot_path)
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            grab_window = getattr(root_window, "grabWindow", None)
+            if not callable(grab_window):
+                LOGGER.error("QML root does not support screenshot capture")
+                return False
+            image = grab_window()
+            if not image.save(str(destination)):
+                LOGGER.error("Could not save UI screenshot to %s", destination)
+                return False
+            LOGGER.info("Saved UI screenshot to %s", destination)
+            return True
+
         smoke_media = os.getenv("BLAKELABS_SMOKE_MEDIA")
         if smoke_media:
             media_url = QUrl.fromLocalFile(str(Path(smoke_media).resolve()))
             QTimer.singleShot(150, lambda: controller.addFiles([media_url]))
 
-        screenshot_path = os.getenv("BLAKELABS_SCREENSHOT_PATH")
-        if screenshot_path:
-            screenshot_delay = max(
-                100,
-                int(os.getenv("BLAKELABS_SCREENSHOT_DELAY_MS", "1200")),
-            )
+        smoke_result_path = os.getenv("BLAKELABS_SMOKE_RESULT_PATH")
+        if smoke_result_path:
+            result_destination = Path(smoke_result_path)
+            result_destination.parent.mkdir(parents=True, exist_ok=True)
+            result_destination.unlink(missing_ok=True)
+            attempts = 0
+            settled = False
+            smoke_timer = QTimer(app)
+            smoke_timer.setInterval(100)
 
-            def capture_screenshot() -> None:
-                destination = Path(screenshot_path)
-                destination.parent.mkdir(parents=True, exist_ok=True)
-                grab_window = getattr(root_window, "grabWindow", None)
-                if not callable(grab_window):
-                    LOGGER.error("QML root does not support screenshot capture")
+            def settle_smoke(result: str, exit_code: int) -> None:
+                nonlocal settled
+                if settled:
                     return
-                image = grab_window()
-                if not image.save(str(destination)):
-                    LOGGER.error("Could not save UI screenshot to %s", destination)
-                else:
-                    LOGGER.info("Saved UI screenshot to %s", destination)
+                settled = True
+                smoke_timer.stop()
+                result_destination.write_text(result, encoding="utf-8")
+                LOGGER.info("Packaged smoke result: %s", result)
 
-            QTimer.singleShot(screenshot_delay, capture_screenshot)
+                def capture_and_exit() -> None:
+                    final_exit_code = exit_code if capture_screenshot() else 4
+                    app.exit(final_exit_code)
 
-        smoke_exit_ms = os.getenv("BLAKELABS_SMOKE_EXIT_MS")
-        if smoke_exit_ms:
-            QTimer.singleShot(max(1, int(smoke_exit_ms)), app.quit)
+                QTimer.singleShot(500, capture_and_exit)
+
+            def inspect_smoke_state() -> None:
+                nonlocal attempts
+                attempts += 1
+                if queue_model.readyCount > 0:
+                    settle_smoke("ready", 0)
+                    return
+                if queue_model.failedCount > 0:
+                    detail = queue_model.first_failure_detail().replace("\n", " ").strip()
+                    settle_smoke(f"failed:{detail}", 2)
+                    return
+                if attempts >= 300:
+                    settle_smoke("timeout", 3)
+
+            smoke_timer.timeout.connect(inspect_smoke_state)
+            smoke_timer.start()
+        else:
+            if screenshot_path:
+                screenshot_delay = max(
+                    100,
+                    int(os.getenv("BLAKELABS_SCREENSHOT_DELAY_MS", "1200")),
+                )
+                QTimer.singleShot(screenshot_delay, capture_screenshot)
+
+            smoke_exit_ms = os.getenv("BLAKELABS_SMOKE_EXIT_MS")
+            if smoke_exit_ms:
+                QTimer.singleShot(max(1, int(smoke_exit_ms)), app.quit)
+
         return app.exec()
