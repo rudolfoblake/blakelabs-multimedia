@@ -63,9 +63,11 @@ def install_ffmpeg(platform_name: str) -> None:
 
 def _download(url: str, destination: Path) -> None:
     request = urllib.request.Request(url, headers={"User-Agent": "BlakeLabs-Multimedia-Build"})
-    with urllib.request.urlopen(request, timeout=120) as response:
-        with destination.open("wb") as output:
-            shutil.copyfileobj(response, output)
+    with (
+        urllib.request.urlopen(request, timeout=120) as response,
+        destination.open("wb") as output,
+    ):
+        shutil.copyfileobj(response, output)
 
 
 if __name__ == "__main__":
