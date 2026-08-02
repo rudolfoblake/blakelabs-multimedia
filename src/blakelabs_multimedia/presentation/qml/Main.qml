@@ -14,6 +14,16 @@ ApplicationWindow {
   minimumHeight: 620
   title: "BlakeLabs Multimedia"
   color: Theme.background
+  palette.window: Theme.background
+  palette.windowText: Theme.text
+  palette.base: Theme.surfaceRaised
+  palette.alternateBase: Theme.surface
+  palette.text: Theme.text
+  palette.button: Theme.surfaceRaised
+  palette.buttonText: Theme.text
+  palette.highlight: Theme.accent
+  palette.highlightedText: Theme.background
+  palette.placeholderText: Theme.textMuted
 
   readonly property bool compact: width < 980
 
@@ -298,14 +308,14 @@ ApplicationWindow {
               spacing: 4
 
               Button {
-                text: "Use source folder"
+                visible: mediaController.outputDirectoryLabel !== "Same folder as source"
+                text: "Reset"
                 flat: true
-                enabled: mediaController.outputDirectoryLabel !== "Same folder as source"
                 onClicked: mediaController.resetOutputDirectory()
 
                 contentItem: Text {
                   text: parent.text
-                  color: parent.enabled ? Theme.textMuted : Theme.border
+                  color: Theme.textMuted
                   font.pixelSize: 10
                   horizontalAlignment: Text.AlignHCenter
                   verticalAlignment: Text.AlignVCenter
@@ -330,7 +340,7 @@ ApplicationWindow {
 
             PrimaryButton {
               Layout.fillWidth: window.compact
-              Layout.preferredWidth: window.compact ? -1 : 188
+              Layout.preferredWidth: 188
               text: mediaQueueModel.readyCount > 0
                     ? "Convert " + mediaQueueModel.readyCount + " file(s)"
                     : "Add files to continue"
@@ -360,7 +370,6 @@ ApplicationWindow {
               Layout.fillWidth: true
 
               ColumnLayout {
-                Layout.fillWidth: true
                 spacing: 2
 
                 Text {
@@ -378,6 +387,8 @@ ApplicationWindow {
                   font.pixelSize: 10
                 }
               }
+
+              Item { Layout.fillWidth: true }
 
               Button {
                 text: "Clear finished"
@@ -435,21 +446,6 @@ ApplicationWindow {
 
                 delegate: MediaQueueCard {
                   Layout.fillWidth: true
-                  jobId: model.jobId
-                  name: model.name
-                  status: model.status
-                  statusLabel: model.statusLabel
-                  detail: model.detail
-                  kind: model.kind
-                  duration: model.duration
-                  fileSize: model.fileSize
-                  progress: model.progress
-                  progressLabel: model.progressLabel
-                  presetTitle: model.presetTitle
-                  speed: model.speed
-                  eta: model.eta
-                  canCancel: model.canCancel
-                  canOpen: model.canOpen
                   onCancelRequested: function(id) { mediaController.cancelJob(id) }
                   onOpenRequested: function(id) { mediaController.openOutputFolder(id) }
                 }
