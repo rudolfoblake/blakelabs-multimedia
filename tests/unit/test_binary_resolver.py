@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from src.blakelabs_multimedia.infrastructure.ffmpeg import binary_resolver
-from src.blakelabs_multimedia.infrastructure.ffmpeg.binary_resolver import FfmpegBinaryResolver
+from blakelabs_multimedia.infrastructure.ffmpeg import binary_resolver
+from blakelabs_multimedia.infrastructure.ffmpeg.binary_resolver import FfmpegBinaryResolver
 
 
 def test_resolves_binary_bundled_next_to_packaged_executable(
