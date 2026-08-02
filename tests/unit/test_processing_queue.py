@@ -2,7 +2,11 @@ from pathlib import Path
 from uuid import uuid4
 
 from blakelabs_multimedia.application.services.processing_queue import ProcessingQueue
-from blakelabs_multimedia.domain.conversion import ProcessingProgress, ProcessingRequest, find_preset
+from blakelabs_multimedia.domain.conversion import (
+    ProcessingProgress,
+    ProcessingRequest,
+    find_preset,
+)
 
 
 class Handle:
