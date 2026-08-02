@@ -9,9 +9,9 @@ Rectangle {
   signal filesSelected(var urls)
   property bool active: dropArea.containsDrag
 
-  implicitHeight: 300
+  implicitHeight: 292
   radius: Theme.radiusLarge
-  color: active ? "#13231A" : Theme.surface
+  color: active ? Theme.accentSoft : Theme.surface
   border.width: active ? 2 : 1
   border.color: active ? Theme.accent : Theme.border
 
@@ -44,19 +44,28 @@ Rectangle {
   ColumnLayout {
     anchors.centerIn: parent
     width: Math.min(parent.width - 48, 460)
-    spacing: 12
+    spacing: 11
 
     Rectangle {
       Layout.alignment: Qt.AlignHCenter
-      Layout.preferredWidth: 60
-      Layout.preferredHeight: 60
+      Layout.preferredWidth: 62
+      Layout.preferredHeight: 62
       radius: 18
-      color: root.active ? Theme.accent : Theme.surfaceRaised
+      color: Theme.surfaceRaised
+      border.width: 1
+      border.color: root.active ? Theme.accent : Theme.borderStrong
+
+      AlienLogo {
+        anchors.fill: parent
+        anchors.margins: 10
+        visible: !root.active
+      }
 
       Text {
         anchors.centerIn: parent
-        text: root.active ? "↓" : "+"
-        color: root.active ? Theme.background : Theme.accent
+        visible: root.active
+        text: "↓"
+        color: Theme.accent
         font.pixelSize: 28
         font.weight: Font.Light
       }
@@ -64,9 +73,9 @@ Rectangle {
 
     Text {
       Layout.fillWidth: true
-      text: root.active ? "Drop files here" : "Add audio or video"
+      text: root.active ? "Drop files to add them" : "Add audio or video"
       color: Theme.text
-      font.pixelSize: 21
+      font.pixelSize: 20
       font.weight: Font.Bold
       horizontalAlignment: Text.AlignHCenter
       wrapMode: Text.WordWrap
@@ -74,26 +83,27 @@ Rectangle {
 
     Text {
       Layout.fillWidth: true
-      text: "Files are analyzed locally. Nothing is uploaded."
+      text: "Analyzed and converted locally. Nothing is uploaded."
       color: Theme.textMuted
-      font.pixelSize: 12
+      font.pixelSize: 11
       horizontalAlignment: Text.AlignHCenter
       wrapMode: Text.WordWrap
     }
 
     Text {
       Layout.fillWidth: true
-      text: "MP3, WAV, FLAC, M4A, MP4, MKV, MOV and WebM"
+      text: "MP3 · WAV · FLAC · M4A · MP4 · MKV · MOV · WebM"
       color: Theme.textMuted
       opacity: 0.72
-      font.pixelSize: 10
+      font.pixelSize: 9
+      font.letterSpacing: 0.5
       horizontalAlignment: Text.AlignHCenter
       wrapMode: Text.WordWrap
     }
 
     PrimaryButton {
       Layout.alignment: Qt.AlignHCenter
-      Layout.topMargin: 4
+      Layout.topMargin: 5
       text: "Choose files"
       onClicked: fileDialog.open()
     }
