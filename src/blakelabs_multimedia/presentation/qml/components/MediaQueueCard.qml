@@ -5,6 +5,7 @@ import BlakeLabsTheme 1.0
 
 Rectangle {
   id: root
+  required property string jobId
   required property string name
   required property string status
   required property string statusLabel
@@ -13,8 +14,16 @@ Rectangle {
   required property string duration
   required property string fileSize
   required property real progress
+  required property string progressLabel
+  required property string presetTitle
+  required property string speed
+  required property string eta
+  required property bool canCancel
+  required property bool canOpen
+  signal cancelRequested(string jobId)
+  signal openRequested(string jobId)
 
-  implicitHeight: 92
+  implicitHeight: 112
   radius: Theme.radiusMedium
   color: mouseArea.containsMouse ? Theme.surfaceHover : Theme.surface
   border.width: 1
@@ -35,26 +44,27 @@ Rectangle {
     spacing: 14
 
     Rectangle {
-      Layout.preferredWidth: 54
-      Layout.preferredHeight: 54
-      radius: 17
+      Layout.preferredWidth: 58
+      Layout.preferredHeight: 58
+      radius: 18
       color: root.status === "failed" ? "#2A1519" : Theme.surfaceRaised
 
       Text {
         anchors.centerIn: parent
-        text: root.kind === "audio" ? "♫" : (root.kind === "image" ? "▧" : "▶")
+        text: root.kind === "audio" ? "A" : (root.kind === "image" ? "I" : "V")
         color: root.status === "failed" ? Theme.danger : Theme.accent
-        font.pixelSize: 21
+        font.pixelSize: 16
         font.weight: Font.Bold
       }
     }
 
     ColumnLayout {
       Layout.fillWidth: true
-      spacing: 5
+      spacing: 6
 
       RowLayout {
         Layout.fillWidth: true
+        spacing: 8
 
         Text {
           Layout.fillWidth: true
@@ -67,8 +77,11 @@ Rectangle {
 
         Text {
           text: root.statusLabel
-          color: root.status === "failed" ? Theme.danger : (root.status === "ready" ? Theme.success : Theme.warning)
-          font.pixelSize: 11
+          color: root.status === "failed" ? Theme.danger
+                 : root.status === "completed" ? Theme.success
+                 : root.status === "processing" ? Theme.accent
+                 : Theme.warning
+          font.pixelSize: 10
           font.weight: Font.Bold
         }
       }
@@ -77,18 +90,18 @@ Rectangle {
         Layout.fillWidth: true
         text: root.detail
         color: Theme.textMuted
-        font.pixelSize: 11
-        elide: Text.ElideRight
+        font.pixelSize: 10
+        elide: Text.ElideMiddle
       }
 
       RowLayout {
         Layout.fillWidth: true
-        spacing: 12
+        spacing: 10
 
         Rectangle {
           Layout.fillWidth: true
-          Layout.preferredHeight: 4
-          radius: 2
+          Layout.preferredHeight: 5
+          radius: 3
           color: Theme.border
 
           Rectangle {
@@ -101,9 +114,56 @@ Rectangle {
         }
 
         Text {
-          text: root.duration + "  ·  " + root.fileSize
-          color: Theme.textMuted
+          text: root.progressLabel
+          color: Theme.text
           font.pixelSize: 10
+          font.weight: Font.Bold
+        }
+      }
+
+      RowLayout {
+        Layout.fillWidth: true
+        spacing: 10
+
+        Text {
+          Layout.fillWidth: true
+          text: root.presetTitle
+                + (root.speed ? "  -  " + root.speed : "")
+                + (root.eta ? "  -  " + root.eta : "")
+                + "  -  " + root.duration + "  -  " + root.fileSize
+          color: Theme.textMuted
+          font.pixelSize: 9
+          elide: Text.ElideRight
+        }
+
+        Button {
+          visible: root.canCancel
+          text: "Cancel"
+          flat: true
+          onClicked: root.cancelRequested(root.jobId)
+          contentItem: Text {
+            text: parent.text
+            color: Theme.danger
+            font.pixelSize: 10
+            font.weight: Font.Bold
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+          }
+        }
+
+        Button {
+          visible: root.canOpen
+          text: "Open folder"
+          flat: true
+          onClicked: root.openRequested(root.jobId)
+          contentItem: Text {
+            text: parent.text
+            color: Theme.accent
+            font.pixelSize: 10
+            font.weight: Font.Bold
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+          }
         }
       }
     }
