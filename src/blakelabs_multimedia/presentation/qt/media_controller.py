@@ -184,9 +184,14 @@ class MediaController(QObject):
 
     @Slot()
     def openDiagnosticsFolder(self) -> None:
-        diagnostics = Path(
-            QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppLocalDataLocation)
-        ) / "logs"
+        diagnostics = (
+            Path(
+                QStandardPaths.writableLocation(
+                    QStandardPaths.StandardLocation.AppLocalDataLocation
+                )
+            )
+            / "logs"
+        )
         diagnostics.mkdir(parents=True, exist_ok=True)
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(diagnostics)))
 
