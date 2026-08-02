@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pytest
-
 from scripts.render_msix_manifest import (
     InvalidProjectVersionError,
     normalize_msix_version,
