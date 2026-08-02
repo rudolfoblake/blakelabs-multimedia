@@ -13,6 +13,7 @@ from blakelabs_multimedia.infrastructure.ffmpeg.binary_resolver import (
     BinaryNotFoundError,
     FfmpegBinaryResolver,
 )
+from blakelabs_multimedia.infrastructure.ffmpeg.command_builder import build_ffprobe_arguments
 from blakelabs_multimedia.infrastructure.ffmpeg.probe_parser import (
     InvalidProbeOutputError,
     parse_ffprobe_json,
@@ -60,22 +61,7 @@ class QtFfprobeMediaProbe:
         process_id = uuid4().hex
         process = QProcess()
         process.setProgram(str(binary))
-        process.setArguments(
-            [
-                "-v",
-                "error",
-                "-nostdin",
-                "-show_entries",
-                (
-                    "format=format_name,duration,size:"
-                    "stream=codec_type,codec_name,width,height,duration,"
-                    "nb_frames,channels,sample_rate"
-                ),
-                "-of",
-                "json",
-                str(path),
-            ]
-        )
+        process.setArguments(build_ffprobe_arguments(path))
         process.setProcessChannelMode(QProcess.ProcessChannelMode.SeparateChannels)
         self._processes[process_id] = process
 
