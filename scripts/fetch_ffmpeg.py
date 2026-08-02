@@ -17,7 +17,9 @@ ROOT = Path(__file__).resolve().parents[1]
 RESOURCE_ROOT = ROOT / "src" / "blakelabs_multimedia" / "resources" / "bin"
 BTBN_BASE_URL = "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest"
 MACOS_RELEASE_TAG = "b6.1.1"
-MACOS_BASE_URL = f"https://github.com/eugeneware/ffmpeg-static/releases/download/{MACOS_RELEASE_TAG}"
+MACOS_BASE_URL = (
+    f"https://github.com/eugeneware/ffmpeg-static/releases/download/{MACOS_RELEASE_TAG}"
+)
 
 
 class UnsupportedPlatformError(RuntimeError):
