@@ -4,11 +4,13 @@ import argparse
 import gzip
 import hashlib
 import json
+import os
 import platform
 import shutil
 import stat
 import tarfile
 import tempfile
+import time
 import urllib.error
 import urllib.request
 import zipfile
@@ -27,9 +29,7 @@ BTBN_BASE_URL = f"https://github.com/{BTBN_REPOSITORY}/releases/download/{BTBN_R
 
 MACOS_REPOSITORY = "eugeneware/ffmpeg-static"
 MACOS_RELEASE_TAG = "b6.1.1"
-MACOS_BASE_URL = (
-    f"https://github.com/{MACOS_REPOSITORY}/releases/download/{MACOS_RELEASE_TAG}"
-)
+MACOS_BASE_URL = f"https://github.com/{MACOS_REPOSITORY}/releases/download/{MACOS_RELEASE_TAG}"
 
 
 class UnsupportedPlatformError(RuntimeError):
@@ -154,19 +154,42 @@ def _install_macos_runtime(architecture: str) -> None:
 
 def _github_release_asset_sha256(repository: str, release_tag: str, asset_name: str) -> str:
     api_url = f"https://api.github.com/repos/{repository}/releases/tags/{release_tag}"
-    request = urllib.request.Request(
-        api_url,
-        headers={
-            "Accept": "application/vnd.github+json",
-            "User-Agent": USER_AGENT,
-            "X-GitHub-Api-Version": "2022-11-28",
-        },
-    )
-    with urllib.request.urlopen(request, timeout=60) as response:
-        release = json.load(response)
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "User-Agent": USER_AGENT,
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
 
-    for asset in release.get("assets", []):
-        if asset.get("name") != asset_name:
+    release: dict[str, object] | None = None
+    for attempt, delay in enumerate((0, 10, 30, 60), start=1):
+        if delay:
+            print(f"Retrying GitHub release digest lookup in {delay}s (attempt {attempt}/4)")
+            time.sleep(delay)
+        request = urllib.request.Request(api_url, headers=headers)
+        try:
+            with urllib.request.urlopen(request, timeout=60) as response:
+                release = json.load(response)
+            break
+        except urllib.error.HTTPError as exc:
+            if exc.code not in {403, 429} or attempt == 4:
+                raise
+
+    if release is None:
+        raise IntegrityError(
+            f"Unable to load release metadata for {repository}@{release_tag}"
+        )
+
+    assets = release.get("assets", [])
+    if not isinstance(assets, list):
+        raise IntegrityError(
+            f"GitHub returned invalid release metadata for {repository}@{release_tag}"
+        )
+
+    for asset in assets:
+        if not isinstance(asset, dict) or asset.get("name") != asset_name:
             continue
         digest = asset.get("digest")
         if not isinstance(digest, str) or not digest.startswith("sha256:"):
