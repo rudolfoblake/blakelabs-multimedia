@@ -96,17 +96,17 @@ def run() -> int:
             result_destination = Path(smoke_result_path)
             result_destination.parent.mkdir(parents=True, exist_ok=True)
             result_destination.unlink(missing_ok=True)
-            attempts = 0
             settled = False
-            smoke_timer = QTimer(app)
-            smoke_timer.setInterval(100)
+            smoke_watchdog = QTimer(app)
+            smoke_watchdog.setSingleShot(True)
+            smoke_watchdog.setInterval(30_000)
 
             def settle_smoke(result: str, exit_code: int) -> None:
                 nonlocal settled
                 if settled:
                     return
                 settled = True
-                smoke_timer.stop()
+                smoke_watchdog.stop()
                 result_destination.write_text(result, encoding="utf-8")
                 LOGGER.info("Packaged smoke result: %s", result)
 
@@ -117,20 +117,17 @@ def run() -> int:
                 QTimer.singleShot(500, capture_and_exit)
 
             def inspect_smoke_state() -> None:
-                nonlocal attempts
-                attempts += 1
                 if queue_model.ready_count() > 0:
                     settle_smoke("ready", 0)
                     return
                 if queue_model.failed_count() > 0:
                     detail = queue_model.first_failure_detail().replace("\n", " ").strip()
                     settle_smoke(f"failed:{detail}", 2)
-                    return
-                if attempts >= 300:
-                    settle_smoke("timeout", 3)
 
-            smoke_timer.timeout.connect(inspect_smoke_state)
-            smoke_timer.start()
+            queue_model.summaryChanged.connect(inspect_smoke_state)
+            smoke_watchdog.timeout.connect(lambda: settle_smoke("timeout", 3))
+            smoke_watchdog.start()
+            QTimer.singleShot(0, inspect_smoke_state)
         else:
             if screenshot_path:
                 screenshot_delay = max(
