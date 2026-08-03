@@ -178,9 +178,7 @@ def _github_release_asset_sha256(repository: str, release_tag: str, asset_name: 
                 raise
 
     if release is None:
-        raise IntegrityError(
-            f"Unable to load release metadata for {repository}@{release_tag}"
-        )
+        raise IntegrityError(f"Unable to load release metadata for {repository}@{release_tag}")
 
     assets = release.get("assets", [])
     if not isinstance(assets, list):
