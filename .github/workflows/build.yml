@@ -78,12 +78,12 @@ jobs:
           $env:SMOKE_MEDIA = Join-Path $env:RUNNER_TEMP "blakelabs-smoke.wav"
           $env:BLAKELABS_SMOKE_MEDIA = $env:SMOKE_MEDIA
           $env:BLAKELABS_SCREENSHOT_PATH = Join-Path $env:RUNNER_TEMP "blakelabs-windows-ui.png"
-          $env:BLAKELABS_SCREENSHOT_DELAY_MS = "2200"
-          $env:BLAKELABS_SMOKE_EXIT_MS = "3800"
-          $env:QT_QPA_PLATFORM = "offscreen"
+          $env:BLAKELABS_SMOKE_RESULT_PATH = Join-Path $env:RUNNER_TEMP "blakelabs-windows-result.txt"
+          $env:QT_QPA_PLATFORM = "windows"
           $env:QT_QUICK_BACKEND = "software"
 
           Remove-Item -LiteralPath $env:BLAKELABS_SCREENSHOT_PATH -Force -ErrorAction SilentlyContinue
+          Remove-Item -LiteralPath $env:BLAKELABS_SMOKE_RESULT_PATH -Force -ErrorAction SilentlyContinue
 
           @'
           import math
@@ -107,10 +107,17 @@ jobs:
             -FilePath ".\build\windows\BlakeLabsMultimedia\BlakeLabsMultimedia.exe" `
             -PassThru
 
-          $deadline = [DateTime]::UtcNow.AddSeconds(30)
+          $deadline = [DateTime]::UtcNow.AddSeconds(45)
+          $resultReady = $false
           $screenshotReady = $false
+          $smokeResult = ""
 
           do {
+            if (Test-Path -LiteralPath $env:BLAKELABS_SMOKE_RESULT_PATH) {
+              $smokeResult = (Get-Content -LiteralPath $env:BLAKELABS_SMOKE_RESULT_PATH -Raw).Trim()
+              $resultReady = $smokeResult.Length -gt 0
+            }
+
             if (Test-Path -LiteralPath $env:BLAKELABS_SCREENSHOT_PATH) {
               $screenshot = Get-Item -LiteralPath $env:BLAKELABS_SCREENSHOT_PATH
               if ($screenshot.Length -gt 1024) {
@@ -133,42 +140,78 @@ jobs:
                   [Convert]::ToHexString($header) -eq "89504E470D0A1A0A"
                 ) {
                   $screenshotReady = $true
-                  break
                 }
               }
             }
 
             $application.Refresh()
-            if ($application.HasExited) {
+            if (($resultReady -and $screenshotReady) -or $application.HasExited) {
               break
             }
 
-            Start-Sleep -Milliseconds 250
+            Start-Sleep -Milliseconds 200
           } while ([DateTime]::UtcNow -lt $deadline)
+
+          $diagnosticsLog = Join-Path `
+            $env:LOCALAPPDATA `
+            "Blake Labs\BlakeLabs Multimedia\logs\blakelabs-multimedia.log"
+
+          if (Test-Path -LiteralPath $diagnosticsLog) {
+            Copy-Item `
+              -LiteralPath $diagnosticsLog `
+              -Destination (Join-Path $env:RUNNER_TEMP "blakelabs-windows.log") `
+              -Force
+          }
+
+          if (-not $resultReady) {
+            if (-not $application.HasExited) {
+              Stop-Process -Id $application.Id -Force
+              $application.WaitForExit()
+            }
+            if (Test-Path -LiteralPath $diagnosticsLog) {
+              Get-Content -LiteralPath $diagnosticsLog
+            }
+            throw "Packaged application did not report a terminal media-analysis result"
+          }
+
+          if ($smokeResult -ne "ready") {
+            if (-not $application.HasExited) {
+              Stop-Process -Id $application.Id -Force
+              $application.WaitForExit()
+            }
+            if (Test-Path -LiteralPath $diagnosticsLog) {
+              Get-Content -LiteralPath $diagnosticsLog
+            }
+            throw "Packaged media analysis did not reach Ready: $smokeResult"
+          }
 
           if (-not $screenshotReady) {
             if (-not $application.HasExited) {
               Stop-Process -Id $application.Id -Force
               $application.WaitForExit()
             }
-            throw "Packaged application did not produce a valid UI smoke screenshot within 30 seconds"
+            throw "Packaged application reached Ready but did not produce a valid PNG screenshot"
           }
 
-          if (-not $application.WaitForExit(20000)) {
+          if (-not $application.WaitForExit(10000)) {
             Stop-Process -Id $application.Id -Force
             $application.WaitForExit()
-            throw "Packaged application produced the screenshot but did not exit cleanly"
+            throw "Packaged application reached Ready but did not exit cleanly"
           }
 
           if ($application.ExitCode -ne 0) {
             throw "Packaged application exited with code $($application.ExitCode)"
           }
-      - name: Upload packaged Windows UI screenshot
+      - name: Upload packaged Windows UI diagnostics
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: UI-smoke-Windows
-          path: ${{ runner.temp }}/blakelabs-windows-ui.png
-          if-no-files-found: error
+          path: |
+            ${{ runner.temp }}/blakelabs-windows-ui.png
+            ${{ runner.temp }}/blakelabs-windows-result.txt
+            ${{ runner.temp }}/blakelabs-windows.log
+          if-no-files-found: warn
       - shell: pwsh
         run: choco install innosetup --yes --no-progress
       - shell: pwsh

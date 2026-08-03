@@ -32,11 +32,9 @@ class FfmpegBinaryResolver:
         executable_name = f"{binary_name}.exe" if sys.platform == "win32" else binary_name
         platform_name = packaged_platform_name()
         if platform_name is not None:
-            packaged = files("blakelabs_multimedia").joinpath(
-                "resources", "bin", platform_name, executable_name
-            )
-            if packaged.is_file():
-                return Path(str(packaged))
+            for packaged in packaged_binary_candidates(executable_name, platform_name):
+                if packaged.is_file():
+                    return packaged.resolve()
 
         system_binary = shutil.which(binary_name)
         if system_binary:
@@ -45,6 +43,31 @@ class FfmpegBinaryResolver:
         raise BinaryNotFoundError(
             f"{binary_name} was not found. Install FFmpeg or set {environment_key}."
         )
+
+
+def packaged_binary_candidates(executable_name: str, platform_name: str) -> tuple[Path, ...]:
+    """Return supported locations for a binary bundled with a desktop build."""
+    package_relative = Path("resources") / "bin" / platform_name / executable_name
+    candidates = [
+        Path(sys.executable).resolve().parent / "blakelabs_multimedia" / package_relative,
+        Path(__file__).resolve().parents[2] / package_relative,
+        Path(
+            str(
+                files("blakelabs_multimedia").joinpath(
+                    "resources", "bin", platform_name, executable_name
+                )
+            )
+        ),
+    ]
+
+    unique_candidates: list[Path] = []
+    seen: set[Path] = set()
+    for candidate in candidates:
+        resolved = candidate.resolve()
+        if resolved not in seen:
+            seen.add(resolved)
+            unique_candidates.append(resolved)
+    return tuple(unique_candidates)
 
 
 def packaged_platform_name(

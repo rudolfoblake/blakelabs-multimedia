@@ -136,12 +136,39 @@ rm -rf "$dmg_root" "$dmg"
 mkdir -p "$dmg_root"
 cp -R "$product_app" "$dmg_root/"
 ln -s /Applications "$dmg_root/Applications"
-hdiutil create \
-  -volname "BlakeLabs Multimedia" \
-  -srcfolder "$dmg_root" \
-  -ov \
-  -format UDZO \
-  "$dmg"
+
+create_dmg() {
+  local max_attempts=3
+  local attempt
+  local status=1
+
+  for ((attempt = 1; attempt <= max_attempts; attempt++)); do
+    rm -f "$dmg"
+    if hdiutil create \
+      -volname "BlakeLabs Multimedia" \
+      -srcfolder "$dmg_root" \
+      -ov \
+      -format UDZO \
+      "$dmg"; then
+      return 0
+    else
+      status=$?
+    fi
+
+    if [[ "$attempt" -lt "$max_attempts" ]]; then
+      delay=$((attempt * 5))
+      printf 'hdiutil create failed on attempt %s; retrying in %ss.\n' \
+        "$attempt" "$delay" >&2
+      sync
+      sleep "$delay"
+    fi
+  done
+
+  printf 'hdiutil create failed after %s attempts.\n' "$max_attempts" >&2
+  return "$status"
+}
+
+create_dmg
 
 printf 'macOS %s application: %s\n' "$arch" "$product_app"
 printf 'macOS %s disk image: %s\n' "$arch" "$dmg"

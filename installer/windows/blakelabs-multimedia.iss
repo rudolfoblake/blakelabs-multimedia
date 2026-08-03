@@ -1,5 +1,5 @@
 #define AppName "BlakeLabs Multimedia"
-#define AppVersion "0.3.1"
+#define AppVersion "0.4.0"
 #define AppPublisher "Blake Labs"
 #define AppExeName "BlakeLabsMultimedia.exe"
 
@@ -18,7 +18,12 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 PrivilegesRequired=admin
 WizardStyle=modern
+SetupIconFile=..\..\build\branding\BlakeLabsMultimedia.ico
 UninstallDisplayIcon={app}\{#AppExeName}
+VersionInfoVersion={#AppVersion}.0
+VersionInfoCompany={#AppPublisher}
+VersionInfoDescription=Professional local audio and video converter
+VersionInfoProductName={#AppName}
 
 [Files]
 Source: "..\..\build\windows\BlakeLabsMultimedia\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs

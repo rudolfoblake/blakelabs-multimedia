@@ -8,10 +8,10 @@ import "components"
 ApplicationWindow {
   id: window
   visible: true
-  width: 1280
-  height: 820
-  minimumWidth: 760
-  minimumHeight: 620
+  width: 1320
+  height: 900
+  minimumWidth: 820
+  minimumHeight: 680
   title: "BlakeLabs Multimedia"
   color: Theme.background
   palette.window: Theme.background
@@ -34,8 +34,8 @@ ApplicationWindow {
   }
 
   header: Rectangle {
-    implicitHeight: 72
-    color: "#0B0F0D"
+    implicitHeight: 68
+    color: "#080B0C"
     border.width: 1
     border.color: Theme.border
 
@@ -43,9 +43,10 @@ ApplicationWindow {
       anchors.fill: parent
       anchors.leftMargin: 24
       anchors.rightMargin: 24
-      spacing: 16
+      spacing: 14
 
       BrandMark {
+        compact: window.width < 860
         Layout.alignment: Qt.AlignVCenter
       }
 
@@ -53,8 +54,8 @@ ApplicationWindow {
 
       Rectangle {
         Layout.preferredWidth: statusRow.implicitWidth + 24
-        Layout.preferredHeight: 34
-        radius: 17
+        Layout.preferredHeight: 32
+        radius: 16
         color: Theme.surface
         border.width: 1
         border.color: Theme.border
@@ -69,7 +70,7 @@ ApplicationWindow {
             width: 7
             height: 7
             radius: 4
-            color: mediaQueueModel.activeCount > 0 ? Theme.warning : Theme.accent
+            color: mediaQueueModel.activeCount > 0 ? Theme.warning : Theme.success
           }
 
           Text {
@@ -109,32 +110,40 @@ ApplicationWindow {
 
     Item {
       width: page.availableWidth
-      implicitHeight: content.implicitHeight + 48
+      implicitHeight: content.implicitHeight + 56
 
       ColumnLayout {
         id: content
         anchors.top: parent.top
-        anchors.topMargin: 24
+        anchors.topMargin: 28
         anchors.horizontalCenter: parent.horizontalCenter
         width: Math.min(Math.max(0, parent.width - 48), 1240)
-        spacing: 20
+        spacing: 18
 
         ColumnLayout {
           Layout.fillWidth: true
           spacing: 5
 
           Text {
+            text: "LOCAL MEDIA CONVERTER"
+            color: Theme.accent
+            font.pixelSize: 10
+            font.weight: Font.Bold
+            font.letterSpacing: 1.8
+          }
+
+          Text {
             Layout.fillWidth: true
             text: "Convert audio and video"
             color: Theme.text
-            font.pixelSize: window.compact ? 24 : 30
+            font.pixelSize: window.compact ? 25 : 31
             font.weight: Font.Bold
             wrapMode: Text.WordWrap
           }
 
           Text {
             Layout.fillWidth: true
-            text: "Choose files, select an output format and start the queue. Processing stays on this computer."
+            text: "Choose files, tune the output and start the queue. Processing stays private on this computer."
             color: Theme.textMuted
             font.pixelSize: 12
             wrapMode: Text.WordWrap
@@ -144,18 +153,18 @@ ApplicationWindow {
         GridLayout {
           Layout.fillWidth: true
           columns: window.compact ? 1 : 2
-          columnSpacing: 18
-          rowSpacing: 18
+          columnSpacing: 16
+          rowSpacing: 16
 
           DropZone {
             Layout.fillWidth: true
-            Layout.preferredHeight: 310
+            Layout.preferredHeight: 292
             onFilesSelected: function(urls) { mediaController.addFiles(urls) }
           }
 
           Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: 310
+            Layout.preferredHeight: 292
             radius: Theme.radiusLarge
             color: Theme.surface
             border.width: 1
@@ -171,17 +180,17 @@ ApplicationWindow {
                 spacing: 4
 
                 Text {
-                  text: "Output format"
+                  text: "Output preset"
                   color: Theme.text
-                  font.pixelSize: 18
+                  font.pixelSize: 17
                   font.weight: Font.Bold
                 }
 
                 Text {
                   Layout.fillWidth: true
-                  text: "The selected preset is applied to every compatible ready file."
+                  text: "A safe professional starting point. Advanced controls can override it below."
                   color: Theme.textMuted
-                  font.pixelSize: 11
+                  font.pixelSize: 10
                   wrapMode: Text.WordWrap
                 }
               }
@@ -189,7 +198,7 @@ ApplicationWindow {
               ComboBox {
                 id: presetBox
                 Layout.fillWidth: true
-                Layout.preferredHeight: 46
+                Layout.preferredHeight: 44
                 model: mediaController.presets
                 textRole: "title"
                 valueRole: "id"
@@ -228,8 +237,10 @@ ApplicationWindow {
                   Rectangle {
                     Layout.preferredWidth: 52
                     Layout.preferredHeight: 52
-                    radius: 16
-                    color: "#14261B"
+                    radius: 15
+                    color: Theme.accentSoft
+                    border.width: 1
+                    border.color: Theme.borderStrong
 
                     Text {
                       anchors.centerIn: parent
@@ -257,7 +268,7 @@ ApplicationWindow {
                       Layout.fillWidth: true
                       text: mediaController.selectedPresetDescription
                       color: Theme.textMuted
-                      font.pixelSize: 11
+                      font.pixelSize: 10
                       lineHeight: 1.25
                       wrapMode: Text.WordWrap
                     }
@@ -268,9 +279,14 @@ ApplicationWindow {
           }
         }
 
+        AdvancedOptions {
+          Layout.fillWidth: true
+          compact: window.compact
+        }
+
         Rectangle {
           Layout.fillWidth: true
-          Layout.preferredHeight: window.compact ? 172 : 92
+          Layout.preferredHeight: window.compact ? 172 : 88
           radius: Theme.radiusMedium
           color: Theme.surface
           border.width: 1
@@ -290,7 +306,7 @@ ApplicationWindow {
               Text {
                 text: "Save converted files to"
                 color: Theme.text
-                font.pixelSize: 12
+                font.pixelSize: 11
                 font.weight: Font.Bold
               }
 
@@ -340,7 +356,7 @@ ApplicationWindow {
 
             PrimaryButton {
               Layout.fillWidth: window.compact
-              Layout.preferredWidth: 188
+              Layout.preferredWidth: 198
               text: mediaQueueModel.readyCount > 0
                     ? "Convert " + mediaQueueModel.readyCount + " file(s)"
                     : "Add files to continue"
@@ -375,7 +391,7 @@ ApplicationWindow {
                 Text {
                   text: "Queue"
                   color: Theme.text
-                  font.pixelSize: 18
+                  font.pixelSize: 17
                   font.weight: Font.Bold
                 }
 
@@ -429,7 +445,7 @@ ApplicationWindow {
 
                 Text {
                   anchors.horizontalCenter: parent.horizontalCenter
-                  text: "Add an audio or video file to begin."
+                  text: "Add audio or video to begin."
                   color: Theme.textMuted
                   font.pixelSize: 10
                 }
