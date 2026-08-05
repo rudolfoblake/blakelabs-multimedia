@@ -22,8 +22,6 @@ jobs:
       - uses: actions/checkout@v4
       - id: plan
         name: Resolve version and release state
-        env:
-          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           version="$(python3 - <<'PY'
@@ -35,24 +33,20 @@ jobs:
           PY
           )"
 
-          if [[ "${GITHUB_REF_TYPE:-}" == "tag" ]]; then
-            tag="$GITHUB_REF_NAME"
-          else
-            tag="v$version"
-          fi
-
-          build=true
+          tag="v$version"
           publish=false
 
-          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
-            if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-              build=false
-            else
-              publish=true
+          if [[ "${GITHUB_REF_TYPE:-}" == "tag" ]]; then
+            tag="$GITHUB_REF_NAME"
+            expected_tag="v$version"
+            if [[ "$tag" != "$expected_tag" ]]; then
+              echo "Release tag $tag does not match project version $expected_tag" >&2
+              exit 1
             fi
+            publish=true
           fi
 
-          echo "build=$build" >> "$GITHUB_OUTPUT"
+          echo "build=true" >> "$GITHUB_OUTPUT"
           echo "publish=$publish" >> "$GITHUB_OUTPUT"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
@@ -65,6 +59,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
         with:
+          version: "0.12.1"
           python-version: "3.12"
           enable-cache: true
       - shell: pwsh
@@ -233,6 +228,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
         with:
+          version: "0.12.1"
           python-version: "3.12"
           enable-cache: true
       - run: bash scripts/build_linux.sh
@@ -259,6 +255,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
         with:
+          version: "0.12.1"
           python-version: "3.12"
           enable-cache: true
       - run: bash scripts/build_macos.sh "${{ matrix.arch }}"
