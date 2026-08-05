@@ -3,14 +3,11 @@ from __future__ import annotations
 import argparse
 import gzip
 import hashlib
-import json
-import os
 import platform
 import shutil
 import stat
 import tarfile
 import tempfile
-import time
 import urllib.error
 import urllib.request
 import zipfile
@@ -21,8 +18,8 @@ ROOT = Path(__file__).resolve().parents[1]
 RESOURCE_ROOT = ROOT / "src" / "blakelabs_multimedia" / "resources" / "bin"
 USER_AGENT = "BlakeLabs-Multimedia-Build"
 
-# Runtime releases are intentionally pinned. Do not replace these tags with "latest":
-# release builds must be reproducible and auditable.
+# Runtime releases and digests are intentionally pinned. Do not replace these tags
+# or hashes with "latest": release builds must be reproducible and auditable.
 BTBN_REPOSITORY = "BtbN/FFmpeg-Builds"
 BTBN_RELEASE_TAG = "autobuild-2025-10-31-13-40"
 BTBN_BASE_URL = f"https://github.com/{BTBN_REPOSITORY}/releases/download/{BTBN_RELEASE_TAG}"
@@ -30,6 +27,39 @@ BTBN_BASE_URL = f"https://github.com/{BTBN_REPOSITORY}/releases/download/{BTBN_R
 MACOS_REPOSITORY = "eugeneware/ffmpeg-static"
 MACOS_RELEASE_TAG = "b6.1.1"
 MACOS_BASE_URL = f"https://github.com/{MACOS_REPOSITORY}/releases/download/{MACOS_RELEASE_TAG}"
+
+PINNED_SHA256: dict[tuple[str, str, str], str] = {
+    (
+        BTBN_REPOSITORY,
+        BTBN_RELEASE_TAG,
+        "ffmpeg-n8.0-30-g71007e6c12-win64-gpl-8.0.zip",
+    ): "05ecc01bb03ef1f4d908c3c982512f07f888848429be6e9662a5a7c558c60b4f",
+    (
+        BTBN_REPOSITORY,
+        BTBN_RELEASE_TAG,
+        "ffmpeg-n8.0-30-g71007e6c12-linux64-gpl-8.0.tar.xz",
+    ): "832449c3f81d0b92db2ee5a3ef5708298d57e238e9534991edcbcecce2e82d94",
+    (
+        MACOS_REPOSITORY,
+        MACOS_RELEASE_TAG,
+        "ffmpeg-darwin-arm64.gz",
+    ): "8923876afa8db5585022d7860ec7e589af192f441c56793971276d450ed3bbfa",
+    (
+        MACOS_REPOSITORY,
+        MACOS_RELEASE_TAG,
+        "ffprobe-darwin-arm64.gz",
+    ): "d986a8ec7b030899fe66a8a288ed809a3543338705a3ce178cfb85869c5d80be",
+    (
+        MACOS_REPOSITORY,
+        MACOS_RELEASE_TAG,
+        "ffmpeg-darwin-x64.gz",
+    ): "929b375c1182d956c51f7ac25e0b2b0411fb01f6f407aa15c9758efeb4242106",
+    (
+        MACOS_REPOSITORY,
+        MACOS_RELEASE_TAG,
+        "ffprobe-darwin-x64.gz",
+    ): "d4da574d6e2e197bd259b47d69cf262df9e312af24ad960444f6d806d3d4c186",
+}
 
 
 class UnsupportedPlatformError(RuntimeError):
@@ -76,7 +106,7 @@ def install_ffmpeg(platform_name: str, architecture: str | None = None) -> None:
     with tempfile.TemporaryDirectory(prefix="blakelabs-ffmpeg-") as temporary_directory:
         temporary = Path(temporary_directory)
         archive = temporary / runtime.archive_name
-        expected_sha256 = _github_release_asset_sha256(
+        expected_sha256 = pinned_asset_sha256(
             runtime.repository,
             runtime.release_tag,
             runtime.archive_name,
@@ -126,6 +156,16 @@ def macos_binary_url(executable_name: str, architecture: str) -> str:
     return f"{MACOS_BASE_URL}/{executable_name}-darwin-{normalized_architecture}.gz"
 
 
+def pinned_asset_sha256(repository: str, release_tag: str, asset_name: str) -> str:
+    key = (repository, release_tag, asset_name)
+    try:
+        return PINNED_SHA256[key]
+    except KeyError as exc:
+        raise IntegrityError(
+            f"No pinned SHA-256 is configured for {repository}@{release_tag}/{asset_name}"
+        ) from exc
+
+
 def _install_macos_runtime(architecture: str) -> None:
     destination = RESOURCE_ROOT / f"macos-{architecture}"
     destination.mkdir(parents=True, exist_ok=True)
@@ -134,7 +174,7 @@ def _install_macos_runtime(architecture: str) -> None:
         for executable_name in ("ffmpeg", "ffprobe"):
             asset_name = f"{executable_name}-darwin-{architecture}.gz"
             compressed = temporary / asset_name
-            expected_sha256 = _github_release_asset_sha256(
+            expected_sha256 = pinned_asset_sha256(
                 MACOS_REPOSITORY,
                 MACOS_RELEASE_TAG,
                 asset_name,
@@ -150,56 +190,6 @@ def _install_macos_runtime(architecture: str) -> None:
         metadata_base = f"{MACOS_BASE_URL}/darwin-{architecture}"
         _download_optional(metadata_base + ".README", destination / "FFMPEG_BUILD_README.txt")
         _download_optional(metadata_base + ".LICENSE", destination / "FFMPEG_LICENSE.txt")
-
-
-def _github_release_asset_sha256(repository: str, release_tag: str, asset_name: str) -> str:
-    api_url = f"https://api.github.com/repos/{repository}/releases/tags/{release_tag}"
-    headers = {
-        "Accept": "application/vnd.github+json",
-        "User-Agent": USER_AGENT,
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
-    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
-    if token:
-        headers["Authorization"] = f"Bearer {token}"
-
-    release: dict[str, object] | None = None
-    for attempt, delay in enumerate((0, 10, 30, 60), start=1):
-        if delay:
-            print(f"Retrying GitHub release digest lookup in {delay}s (attempt {attempt}/4)")
-            time.sleep(delay)
-        request = urllib.request.Request(api_url, headers=headers)
-        try:
-            with urllib.request.urlopen(request, timeout=60) as response:
-                release = json.load(response)
-            break
-        except urllib.error.HTTPError as exc:
-            if exc.code not in {403, 429} or attempt == 4:
-                raise
-
-    if release is None:
-        raise IntegrityError(f"Unable to load release metadata for {repository}@{release_tag}")
-
-    assets = release.get("assets", [])
-    if not isinstance(assets, list):
-        raise IntegrityError(
-            f"GitHub returned invalid release metadata for {repository}@{release_tag}"
-        )
-
-    for asset in assets:
-        if not isinstance(asset, dict) or asset.get("name") != asset_name:
-            continue
-        digest = asset.get("digest")
-        if not isinstance(digest, str) or not digest.startswith("sha256:"):
-            raise IntegrityError(
-                f"GitHub did not publish a SHA-256 digest for {repository} "
-                f"release {release_tag} asset {asset_name}"
-            )
-        return digest.removeprefix("sha256:").lower()
-
-    raise FileNotFoundError(
-        f"Pinned FFmpeg asset was not found: {repository}@{release_tag}/{asset_name}"
-    )
 
 
 def _verify_sha256(path: Path, expected_sha256: str) -> None:
