@@ -2,8 +2,10 @@ from typing import cast
 
 from PySide6.QtCore import QProcess
 
-from blakelabs_multimedia.infrastructure.ffmpeg.qt_probe import _ProbeState
-from blakelabs_multimedia.infrastructure.ffmpeg.qt_probe import _QtProcessHandle as ProbeHandle
+from blakelabs_multimedia.infrastructure.ffmpeg.qt_probe import (
+    _ProbeState,
+    _QtProcessHandle as ProbeHandle,
+)
 from blakelabs_multimedia.infrastructure.ffmpeg.qt_processor import _append_bounded_tail
 
 
