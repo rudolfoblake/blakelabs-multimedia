@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable
+from dataclasses import dataclass
 from pathlib import Path
 from uuid import uuid4
 
@@ -24,11 +25,18 @@ PROBE_TIMEOUT_MS = 15_000
 MAX_PROBE_OUTPUT_BYTES = 2 * 1024 * 1024
 
 
+@dataclass(slots=True)
+class _ProbeState:
+    cancel_requested: bool = False
+
+
 class _QtProcessHandle:
-    def __init__(self, process: QProcess) -> None:
+    def __init__(self, process: QProcess, state: _ProbeState) -> None:
         self._process = process
+        self._state = state
 
     def cancel(self) -> None:
+        self._state.cancel_requested = True
         if self._process.state() != QProcess.ProcessState.NotRunning:
             self._process.kill()
 
@@ -70,6 +78,7 @@ class QtFfprobeMediaProbe:
         timeout.setInterval(PROBE_TIMEOUT_MS)
         stdout = bytearray()
         stderr = bytearray()
+        state = _ProbeState()
         finished_once = False
 
         def cleanup() -> None:
@@ -77,9 +86,19 @@ class QtFfprobeMediaProbe:
             self._processes.pop(process_id, None)
             process.deleteLater()
 
+        def settle_without_callback() -> None:
+            nonlocal finished_once
+            if finished_once:
+                return
+            finished_once = True
+            cleanup()
+
         def fail_once(message: str) -> None:
             nonlocal finished_once
             if finished_once:
+                return
+            if state.cancel_requested:
+                settle_without_callback()
                 return
             finished_once = True
             LOGGER.error("Media probe failed for %s: %s", path, message)
@@ -114,6 +133,9 @@ class QtFfprobeMediaProbe:
                 return
             read_stdout()
             read_stderr()
+            if state.cancel_requested:
+                settle_without_callback()
+                return
             if exit_status == QProcess.ExitStatus.CrashExit:
                 fail_once("Media analysis stopped unexpectedly.")
                 return
@@ -132,6 +154,9 @@ class QtFfprobeMediaProbe:
             cleanup()
 
         def process_error(error: QProcess.ProcessError) -> None:
+            if state.cancel_requested:
+                settle_without_callback()
+                return
             LOGGER.warning("FFprobe process error for %s: %s", path, error)
             fail_once(process.errorString() or "Unable to start media analysis.")
 
@@ -150,4 +175,4 @@ class QtFfprobeMediaProbe:
         process.start()
         process.closeWriteChannel()
         timeout.start()
-        return _QtProcessHandle(process)
+        return _QtProcessHandle(process, state)

@@ -108,9 +108,7 @@ class QtFfmpegMediaProcessor:
 
         def read_stderr() -> None:
             chunk = bytes(process.readAllStandardError().data())
-            remaining = _MAX_STDERR_BYTES - len(context.stderr)
-            if remaining > 0:
-                context.stderr.extend(chunk[-remaining:])
+            _append_bounded_tail(context.stderr, chunk, _MAX_STDERR_BYTES)
 
         def cleanup() -> None:
             self._contexts.pop(request.job_id, None)
@@ -172,6 +170,16 @@ class QtFfmpegMediaProcessor:
         process.errorOccurred.connect(process_error)
         process.start()
         return _QtProcessHandle(context)
+
+
+def _append_bounded_tail(target: bytearray, payload: bytes, maximum_bytes: int) -> None:
+    if maximum_bytes <= 0:
+        target.clear()
+        return
+    target.extend(payload)
+    overflow = len(target) - maximum_bytes
+    if overflow > 0:
+        del target[:overflow]
 
 
 def _summarize_ffmpeg_error(message: str, exit_code: int) -> str:
