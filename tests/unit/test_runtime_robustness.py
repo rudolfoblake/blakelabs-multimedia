@@ -2,15 +2,12 @@ from typing import cast
 
 from PySide6.QtCore import QProcess
 
-from blakelabs_multimedia.infrastructure.ffmpeg.qt_probe import (
-    _ProbeState,
-    _QtProcessHandle as ProbeHandle,
-)
+from blakelabs_multimedia.infrastructure.ffmpeg import qt_probe
 from blakelabs_multimedia.infrastructure.ffmpeg.qt_processor import _append_bounded_tail
 
 
 class _FakeProcess:
-    def __init__(self, state: _ProbeState) -> None:
+    def __init__(self, state: qt_probe._ProbeState) -> None:
         self._probe_state = state
         self.killed = False
 
@@ -23,10 +20,10 @@ class _FakeProcess:
 
 
 def test_probe_cancellation_is_recorded_before_process_is_killed() -> None:
-    state = _ProbeState()
+    state = qt_probe._ProbeState()
     process = _FakeProcess(state)
 
-    ProbeHandle(cast(QProcess, process), state).cancel()
+    qt_probe._QtProcessHandle(cast(QProcess, process), state).cancel()
 
     assert state.cancel_requested is True
     assert process.killed is True
