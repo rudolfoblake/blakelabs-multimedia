@@ -20,6 +20,22 @@ uv run python scripts/instagram_downloader.py
 
 The script asks which mode to use, where to save the files, and whether to log in. Login is optional for public content and may be required for private content you are allowed to access. To avoid typing a password interactively, set `INSTAGRAM_PASSWORD` in the environment; do not commit credentials to the repository.
 
+## Jellyfin Docker media server
+
+A portable Jellyfin Docker Compose setup lives in [`docker/jellyfin`](docker/jellyfin/README.md). It is designed to run on Docker Desktop for Windows as well as Docker Compose on Linux/macOS.
+
+The Jellyfin configuration/cache stay in Docker named volumes, while Movies, Series, Music and Other media are read-only bind mounts configured through a local `.env` file. This means Windows drive letters and host folders can change without editing the Compose file.
+
+Windows example:
+
+```powershell
+Copy-Item docker/jellyfin/.env.example docker/jellyfin/.env
+notepad docker/jellyfin/.env
+docker compose --env-file docker/jellyfin/.env -f docker/jellyfin/compose.yml up -d
+```
+
+Then open `http://localhost:8096`. See the [Jellyfin Docker guide](docker/jellyfin/README.md) for drive/path examples, stop/update commands and migration notes.
+
 ## Product highlights
 
 - Local, private audio and video processing
@@ -85,6 +101,7 @@ Microsoft Store product: `https://apps.microsoft.com/detail/9NS1J3D51RFX`
 - [User guide](docs/user-guide.md)
 - [Advanced conversion reference](docs/advanced-conversion.md)
 - [Architecture](docs/architecture.md)
+- [Jellyfin Docker](docker/jellyfin/README.md)
 - [Microsoft Store submission](docs/microsoft-store.md)
 - [macOS packaging](docs/macos.md)
 - [Privacy policy](docs/privacy-policy.md)
