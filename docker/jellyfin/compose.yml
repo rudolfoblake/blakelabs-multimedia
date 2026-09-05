@@ -30,8 +30,117 @@ services:
         target: /media/other
         read_only: true
 
+  qbittorrent:
+    image: ${QBITTORRENT_IMAGE:-lscr.io/linuxserver/qbittorrent:latest}
+    container_name: blakelabs-qbittorrent
+    restart: unless-stopped
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TZ:-America/Sao_Paulo}
+      WEBUI_PORT: ${QBITTORRENT_WEBUI_PORT:-8080}
+      TORRENTING_PORT: ${QBITTORRENT_TORRENT_PORT:-6881}
+    ports:
+      - "${QBITTORRENT_WEBUI_PORT:-8080}:${QBITTORRENT_WEBUI_PORT:-8080}/tcp"
+      - "${QBITTORRENT_TORRENT_PORT:-6881}:${QBITTORRENT_TORRENT_PORT:-6881}/tcp"
+      - "${QBITTORRENT_TORRENT_PORT:-6881}:${QBITTORRENT_TORRENT_PORT:-6881}/udp"
+    volumes:
+      - qbittorrent-config:/config
+      - type: bind
+        source: ${DOWNLOADS_PATH:-./runtime/downloads}
+        target: /downloads
+
+  radarr:
+    image: ${RADARR_IMAGE:-lscr.io/linuxserver/radarr:latest}
+    container_name: blakelabs-radarr
+    restart: unless-stopped
+    depends_on:
+      - qbittorrent
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TZ:-America/Sao_Paulo}
+    ports:
+      - "${RADARR_PORT:-7878}:7878/tcp"
+    volumes:
+      - radarr-config:/config
+      - type: bind
+        source: ${JELLYFIN_MOVIES_PATH:-./runtime/media/movies}
+        target: /movies
+      - type: bind
+        source: ${DOWNLOADS_PATH:-./runtime/downloads}
+        target: /downloads
+
+  sonarr:
+    image: ${SONARR_IMAGE:-lscr.io/linuxserver/sonarr:latest}
+    container_name: blakelabs-sonarr
+    restart: unless-stopped
+    depends_on:
+      - qbittorrent
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TZ:-America/Sao_Paulo}
+    ports:
+      - "${SONARR_PORT:-8989}:8989/tcp"
+    volumes:
+      - sonarr-config:/config
+      - type: bind
+        source: ${JELLYFIN_SERIES_PATH:-./runtime/media/series}
+        target: /tv
+      - type: bind
+        source: ${DOWNLOADS_PATH:-./runtime/downloads}
+        target: /downloads
+
+  prowlarr:
+    image: ${PROWLARR_IMAGE:-lscr.io/linuxserver/prowlarr:latest}
+    container_name: blakelabs-prowlarr
+    restart: unless-stopped
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TZ:-America/Sao_Paulo}
+    ports:
+      - "${PROWLARR_PORT:-9696}:9696/tcp"
+    volumes:
+      - prowlarr-config:/config
+
+  seerr:
+    image: ${SEERR_IMAGE:-ghcr.io/seerr-team/seerr:latest}
+    container_name: blakelabs-seerr
+    init: true
+    restart: unless-stopped
+    depends_on:
+      - jellyfin
+      - radarr
+      - sonarr
+    environment:
+      LOG_LEVEL: ${SEERR_LOG_LEVEL:-info}
+      TZ: ${TZ:-America/Sao_Paulo}
+      PORT: 5055
+    ports:
+      - "${SEERR_PORT:-5055}:5055/tcp"
+    volumes:
+      - seerr-config:/app/config
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/settings/public || exit 1"]
+      start_period: 20s
+      interval: 15s
+      timeout: 3s
+      retries: 3
+
 volumes:
   jellyfin-config:
     name: blakelabs-jellyfin-config
   jellyfin-cache:
     name: blakelabs-jellyfin-cache
+  qbittorrent-config:
+    name: blakelabs-qbittorrent-config
+  radarr-config:
+    name: blakelabs-radarr-config
+  sonarr-config:
+    name: blakelabs-sonarr-config
+  prowlarr-config:
+    name: blakelabs-prowlarr-config
+  seerr-config:
+    name: blakelabs-seerr-config
