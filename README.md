@@ -4,6 +4,22 @@
 
 BlakeLabs Multimedia turns FFmpeg into a focused Windows, macOS and Linux desktop product. Files stay on the device, the UI remains responsive, source files are never overwritten, and both safe presets and professional controls are available without terminal commands.
 
+## Instagram video downloader
+
+The repository also includes an interactive helper for downloading videos you are authorized to access from Instagram. It supports two modes:
+
+1. Download one video/Reel by pasting its Instagram URL.
+2. Download videos in batch from an Instagram account/profile.
+
+Run it with:
+
+```bash
+uv sync
+uv run python scripts/instagram_downloader.py
+```
+
+The script asks which mode to use, where to save the files, and whether to log in. Login is optional for public content and may be required for private content you are allowed to access. To avoid typing a password interactively, set `INSTAGRAM_PASSWORD` in the environment; do not commit credentials to the repository.
+
 ## Product highlights
 
 - Local, private audio and video processing
