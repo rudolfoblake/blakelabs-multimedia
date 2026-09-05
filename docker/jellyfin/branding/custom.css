@@ -1,0 +1,337 @@
+/* ==========================================================
+   BLAKE LABS — JELLYFIN
+   Minimal / Editorial / Cinematic
+   ========================================================== */
+
+:root {
+    --blake-black: #050505;
+    --blake-black-soft: #0a0a0a;
+    --blake-panel: rgba(10, 10, 10, 0.82);
+    --blake-white: #f5f5f3;
+    --blake-gray: #8b9098;
+    --blake-gray-dark: #3a3f46;
+    --blake-accent: #b7ff00;
+    --blake-border: rgba(255, 255, 255, 0.10);
+    --blake-border-strong: rgba(255, 255, 255, 0.18);
+    --blake-radius: 6px;
+}
+
+html,
+body,
+.backgroundContainer,
+.skinBody {
+    background: var(--blake-black) !important;
+    color: var(--blake-white) !important;
+}
+
+body {
+    letter-spacing: 0.01em;
+}
+
+:root {
+    --theme-primary-color: var(--blake-white) !important;
+    --theme-accent-text-color: var(--blake-black) !important;
+}
+
+/* Login page */
+#loginPage {
+    background:
+        linear-gradient(
+            90deg,
+            rgba(0, 0, 0, 0.88) 0%,
+            rgba(0, 0, 0, 0.66) 42%,
+            rgba(0, 0, 0, 0.20) 100%
+        ),
+        url("/Branding/Splashscreen?format=jpg&foregroundLayer=20.0")
+        center center / cover no-repeat fixed !important;
+    min-height: 100vh;
+}
+
+body:has(#loginPage:not(.hide)) .skinHeader {
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+#loginPage .padded-left.padded-right.padded-bottom-page {
+    width: min(420px, calc(100vw - 48px));
+    margin-left: clamp(24px, 7vw, 110px);
+    margin-right: auto;
+    padding-top: 15vh;
+}
+
+#loginPage .loginLogo {
+    background: none !important;
+    height: auto !important;
+    width: 100% !important;
+    margin: 0 0 2.5rem 0 !important;
+}
+
+#loginPage .loginLogo::before {
+    content: "BLAKE LABS";
+    display: block;
+    color: var(--blake-white);
+    font-size: clamp(1.35rem, 2vw, 2rem);
+    font-weight: 800;
+    letter-spacing: 0.24em;
+    line-height: 1;
+    text-align: left;
+}
+
+#loginPage .loginLogo::after {
+    content: "PRIVATE MEDIA";
+    display: block;
+    color: var(--blake-gray);
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.34em;
+    margin-top: 0.8rem;
+    text-align: left;
+}
+
+#loginPage h1 {
+    display: none !important;
+}
+
+#loginPage .readOnlyContent,
+#loginPage form {
+    max-width: 100%;
+}
+
+/* Inputs */
+.emby-input,
+.emby-textarea,
+.emby-select {
+    background: rgba(255, 255, 255, 0.035) !important;
+    border: 1px solid var(--blake-border) !important;
+    border-radius: var(--blake-radius) !important;
+    color: var(--blake-white) !important;
+    box-shadow: none !important;
+    transition: border-color 0.18s ease, background 0.18s ease;
+}
+
+.emby-input:hover,
+.emby-textarea:hover,
+.emby-select:hover {
+    border-color: var(--blake-border-strong) !important;
+}
+
+.emby-input:focus,
+.emby-textarea:focus,
+.emby-select:focus {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-color: rgba(183, 255, 0, 0.60) !important;
+    outline: none !important;
+}
+
+.inputLabel,
+.inputLabelUnfocused,
+.fieldDescription {
+    color: var(--blake-gray) !important;
+}
+
+/* Buttons */
+.button-submit,
+.raised.button-submit,
+.emby-button.button-submit {
+    background: var(--blake-white) !important;
+    color: #050505 !important;
+    border-radius: var(--blake-radius) !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.08em;
+    box-shadow: none !important;
+    transition: transform 0.18s ease, opacity 0.18s ease;
+}
+
+.button-submit:hover,
+.raised.button-submit:hover,
+.emby-button.button-submit:hover {
+    transform: translateY(-1px);
+    opacity: 0.88;
+}
+
+.emby-button:not(.button-submit) {
+    border-radius: var(--blake-radius) !important;
+}
+
+/* Login disclaimer */
+.disclaimerContainer {
+    color: var(--blake-gray) !important;
+    font-size: 0.72rem !important;
+    line-height: 1.6;
+    letter-spacing: 0.04em;
+    text-align: left !important;
+    margin-top: 2rem !important;
+    opacity: 0.72;
+}
+
+/* Header */
+.skinHeader {
+    background: rgba(5, 5, 5, 0.88) !important;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.pageTitleWithDefaultLogo {
+    background: none !important;
+    width: auto !important;
+    height: auto !important;
+    min-width: 170px;
+}
+
+.pageTitleWithDefaultLogo::after {
+    content: "BLAKE LABS";
+    color: var(--blake-white);
+    font-size: 0.86rem;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    white-space: nowrap;
+}
+
+/* Navigation */
+.headerTabs {
+    font-weight: 600;
+}
+
+.emby-tab-button {
+    color: var(--blake-gray) !important;
+    letter-spacing: 0.05em;
+    transition: color 0.18s ease, opacity 0.18s ease;
+}
+
+.emby-tab-button:hover,
+.emby-tab-button-active,
+.emby-tab-button-active .emby-button-foreground {
+    color: var(--blake-white) !important;
+}
+
+/* Drawer / sidebar */
+.mainDrawer {
+    background: #080808 !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.navMenuOption {
+    border-radius: 4px !important;
+    color: var(--blake-gray) !important;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.navMenuOption:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: var(--blake-white) !important;
+}
+
+.navMenuOption-selected {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: var(--blake-white) !important;
+    border-left: 2px solid var(--blake-accent);
+}
+
+/* Cards */
+.cardBox {
+    border-radius: 4px !important;
+    overflow: hidden;
+}
+
+.cardImageContainer,
+.cardContent {
+    border-radius: 4px !important;
+}
+
+.cardImageContainer {
+    transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.22s ease;
+}
+
+.card:hover .cardImageContainer {
+    transform: scale(1.018);
+    filter: brightness(1.06);
+}
+
+.cardBox,
+.cardScalable {
+    box-shadow: none !important;
+}
+
+/* Section titles */
+.sectionTitle,
+.sectionTitleTextButton {
+    color: var(--blake-white) !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.02em;
+}
+
+/* Detail pages */
+.detailPagePrimaryContainer {
+    background:
+        linear-gradient(
+            180deg,
+            rgba(5, 5, 5, 0.10),
+            rgba(5, 5, 5, 0.92) 72%,
+            #050505 100%
+        ) !important;
+}
+
+.detailPageSecondaryContainer {
+    background: var(--blake-black) !important;
+}
+
+.backdropImage {
+    filter: saturate(0.75) contrast(1.05) brightness(0.72);
+}
+
+/* Dialogs */
+.dialog,
+.formDialogFooter:not(.formDialogFooter-clear),
+.formDialogHeader:not(.formDialogHeader-clear) {
+    background: #0b0b0b !important;
+    border-color: var(--blake-border) !important;
+}
+
+.dialog {
+    border-radius: 8px !important;
+    box-shadow: 0 20px 70px rgba(0, 0, 0, 0.65) !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #050505;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #343434;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #4a4a4a;
+}
+
+::selection {
+    background: var(--blake-accent);
+    color: #050505;
+}
+
+/* Mobile */
+@media (max-width: 700px) {
+    #loginPage {
+        background-position: center center !important;
+    }
+
+    #loginPage .padded-left.padded-right.padded-bottom-page {
+        margin: auto;
+        padding-top: 16vh;
+        width: calc(100vw - 40px);
+    }
+
+    #loginPage .loginLogo::before,
+    #loginPage .loginLogo::after {
+        text-align: center;
+    }
+}
