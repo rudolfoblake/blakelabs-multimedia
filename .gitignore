@@ -26,3 +26,7 @@ Thumbs.db
 *.log
 media-output/
 fixtures-private/
+
+# Jellyfin Docker local configuration/runtime
+docker/jellyfin/.env
+docker/jellyfin/runtime/

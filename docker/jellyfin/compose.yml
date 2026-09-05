@@ -1,0 +1,37 @@
+name: blakelabs-multimedia-jellyfin
+
+services:
+  jellyfin:
+    image: ${JELLYFIN_IMAGE:-jellyfin/jellyfin:latest}
+    container_name: blakelabs-jellyfin
+    restart: unless-stopped
+    ports:
+      - "${JELLYFIN_HTTP_PORT:-8096}:8096/tcp"
+      - "${JELLYFIN_DISCOVERY_PORT:-7359}:7359/udp"
+    environment:
+      TZ: ${TZ:-America/Sao_Paulo}
+    volumes:
+      - jellyfin-config:/config
+      - jellyfin-cache:/cache
+      - type: bind
+        source: ${JELLYFIN_MOVIES_PATH:-./runtime/media/movies}
+        target: /media/movies
+        read_only: true
+      - type: bind
+        source: ${JELLYFIN_SERIES_PATH:-./runtime/media/series}
+        target: /media/series
+        read_only: true
+      - type: bind
+        source: ${JELLYFIN_MUSIC_PATH:-./runtime/media/music}
+        target: /media/music
+        read_only: true
+      - type: bind
+        source: ${JELLYFIN_OTHER_MEDIA_PATH:-./runtime/media/other}
+        target: /media/other
+        read_only: true
+
+volumes:
+  jellyfin-config:
+    name: blakelabs-jellyfin-config
+  jellyfin-cache:
+    name: blakelabs-jellyfin-cache
